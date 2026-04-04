@@ -81,9 +81,17 @@ CREATE TABLE transactions (
 
 -- Initial Hardcoded Categories
 INSERT INTO categories (category_name) VALUES
+('Credit Card Interest'),
+('Savings Interest'),
+('Electronic Deposit'),
+('Cash Deposit'),
+('Check Deposit'),
+('Internal Transfer'),
+('Refund'),
 ('Shopping'),
 ('Entertainment'),
 ('Bills & Utilities'),
 ('Food & Dining'),
 ('Travel'),
-('Cash Withdrawals');
+('Cash Withdrawals'),
+('Check Deposits');
