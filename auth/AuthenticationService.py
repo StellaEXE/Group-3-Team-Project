@@ -27,7 +27,7 @@ class AuthenticationService:
             return False
 
     @staticmethod
-    def derive_aes_key(self, password: str, salt: bytes) -> bytes:
+    def derive_aes_key(password: str, salt: bytes) -> bytes:
         # Derives a 256-bit AES key from  password and salt using PBKDF2
         kdf = PBKDF2HMAC(
             algorithm = hashes.SHA256(),
@@ -38,7 +38,7 @@ class AuthenticationService:
         return kdf.derive(password.encode('utf-8'))
 
     @staticmethod
-    def encrypt(self, plaintext: str, key: bytes) -> bytes:
+    def encrypt(plaintext: str, key: bytes) -> bytes:
         # Encrypts a string with AES-256-GCM
         aesgcm = AESGCM(key)
         # GCM needs 96-bit or 12 byte nonce for every encryption
@@ -49,7 +49,7 @@ class AuthenticationService:
         return nonce + ciphertext
 
     @staticmethod
-    def decrypt(self, ciphertext: bytes, key: bytes) -> str:
+    def decrypt(ciphertext: bytes, key: bytes) -> str:
         # Decrypts AES-256-GCM ciphertext back to string
         aesgcm = AESGCM(key)
 
