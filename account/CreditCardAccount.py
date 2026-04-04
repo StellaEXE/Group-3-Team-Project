@@ -1,4 +1,4 @@
-from Account import Account
+from .Account import Account
 from auth.AuthenticationService import AuthenticationService
 from uuid import UUID
 from decimal import Decimal
@@ -29,9 +29,8 @@ class CreditCardAccount(Account):
         return charge.quantize(Decimal('0.01'))
 
     def apply_interest_charge(self, overdue_amount: Decimal):
-        """ Increases the balance by interest"""
         charge = self.calculate_interest_charge(overdue_amount)
         if charge > 0:
-            # Credit card 'balance' represents debt, so we 'withdraw' or add to the debt.
-            self.withdraw(charge)
+            # We use deposit because balance represents debt.
+            self.deposit(charge)
         return charge
