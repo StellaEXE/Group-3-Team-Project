@@ -2,3 +2,4 @@ PyQt6
 cryptography
 pytest
 pytest-qt
+argon2-cffi

@@ -24,6 +24,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Initialize SQLite Database
+      run: |
+        sqlite3 WealthTrackersDB.sqlite < schema.sql
+      shell: cmd
+
     - name: Run Tests with Pytest
       # Setting the platform to offscreen so PyQT doesn't crash without a monitor
       env:
