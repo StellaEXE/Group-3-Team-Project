@@ -2,6 +2,8 @@
 CREATE TABLE users (
     user_id TEXT PRIMARY KEY,           -- UUID generated in Python
     username TEXT UNIQUE NOT NULL,
+    enc_email BLOB,
+    enc_phone BLOB,
     password_hash BLOB NOT NULL,        -- Argon2id output
     encryption_salt BLOB NOT NULL,      -- Salt for derive_aes_key()
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -79,6 +81,7 @@ CREATE TABLE transactions (
 
 -- Initial Hardcoded Categories
 INSERT INTO categories (category_name) VALUES
+('Shopping'),
 ('Entertainment'),
 ('Bills & Utilities'),
 ('Food & Dining'),
