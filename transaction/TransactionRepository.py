@@ -90,3 +90,21 @@ class TransactionRepository:
             for row in cursor.fetchall():
                 totals[row[0]] = Decimal(str(row[1]))
         return totals
+
+    def get_total_spending_by_vendor(self, account_id: UUID) -> Dict[str, Decimal]:
+        """Aggregates EXPENSE totals grouped by vendor name for a specific account."""
+        query = """
+                SELECT v.vendor_name, SUM(t.amount)
+                FROM transactions t
+                         JOIN vendors v ON t.vendor_id = v.vendor_id
+                WHERE t.account_id = ? \
+                  AND t.transaction_type = 'EXPENSE'
+                GROUP BY v.vendor_name \
+                """
+        totals = {}
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, (str(account_id),))
+            for row in cursor.fetchall():
+                totals[row[0]] = Decimal(str(row[1]))
+        return totals

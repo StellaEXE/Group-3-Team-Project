@@ -1,5 +1,6 @@
-PyQt6
+argon2-cffi
 cryptography
+matplotlib
 pytest
 pytest-qt
-argon2-cffi
+PyQt6

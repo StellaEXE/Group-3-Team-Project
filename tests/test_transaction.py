@@ -3,7 +3,7 @@ import os
 import sqlite3
 import pytest
 import tempfile
-import gc  # Added for garbage collection
+import gc  # Force garbage collection
 from decimal import Decimal
 from datetime import datetime
 from transaction.Transaction import Transaction

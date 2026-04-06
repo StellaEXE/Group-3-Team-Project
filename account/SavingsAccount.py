@@ -22,5 +22,5 @@ class SavingsAccount(Account):
         """Applies the interest to the balance"""
         earned = self.calculate_monthly_interest()
         self.deposit(earned)
-        # Note: In your main app, trigger a Transaction(type="Savings Interest") here
+
         return earned

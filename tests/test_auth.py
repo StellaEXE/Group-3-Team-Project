@@ -1,5 +1,7 @@
-from auth.UserSession import UserSession;
-from auth.AuthenticationService import AuthenticationService;
+import pytest
+
+from auth.UserSession import UserSession
+from auth.AuthenticationService import AuthenticationService
 
 def test_singleton_identity():
     # Verify UserSession is a strict singleton
@@ -26,3 +28,6 @@ def test_encryption_decryption():
 
     assert decrypted == original_text
     assert encrypted != original_text.encode()
+
+if __name__ == "__main__":
+    pytest.main([__file__])

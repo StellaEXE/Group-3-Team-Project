@@ -5,13 +5,12 @@ import pytest
 import tempfile
 import gc
 from decimal import Decimal
-from datetime import datetime  # Now used in balance reconstruction test
+from datetime import datetime
 
-# Internal Imports
 from account.CheckingAccount import CheckingAccount
 from account.SavingsAccount import SavingsAccount
 from account.CreditCardAccount import CreditCardAccount
-from account.DebitCardAccount import DebitCardAccount  # Now used in subclass test
+from account.DebitCardAccount import DebitCardAccount
 from account.AccountRepository import AccountRepository
 
 
@@ -163,5 +162,4 @@ def test_repository_save_and_fetch_all(temp_db):
             assert acc.balance == Decimal('200.00')
 
 if __name__ == "__main__":
-    # Ensure all imports are used and tests are executed
     pytest.main([__file__])
