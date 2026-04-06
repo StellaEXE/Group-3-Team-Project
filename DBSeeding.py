@@ -5,14 +5,14 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 # --- INTERNAL IMPORTS ---
-from core.auth import AuthenticationService
+from core.auth.AuthenticationService import AuthenticationService
 from core.transaction.Transaction import Transaction
 from core.transaction.TransactionRepository import TransactionRepository
 
 # --- CONFIGURATION ---
 DB_PATH = 'WealthTrackersDB.sqlite'
 USER_ID = "BasilissaOfNuts"
-PASSWORD = "ImTooUncFor0rb!t"
+PASSWORD = "Im2ooUncFor0r5!t"
 EMAIL = "IHateAsymDuals@gmail.com"
 PHONE = "777-666-9999"
 
@@ -175,7 +175,6 @@ def seed():
         print(f"Critical Seed Failure: {e}")
     finally:
         if conn: conn.close()
-
 
 if __name__ == "__main__":
     seed()
