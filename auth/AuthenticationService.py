@@ -8,12 +8,12 @@ from cryptography.hazmat.primitives import hashes
 
 class AuthenticationService:
     def __init__(self):
-        # Initializes Argon2id hasher with secure parameters
+        """Initializes Argon2id hasher with secure parameters """
         self.ph = PasswordHasher()
 
     def hash_password(self, password: str) -> bytes:
-        # Hashes a password using Argon2id
-        # Encode argon2-cffi's string output to bytes
+        """Hashes a password using Argon2id
+           Encode argon2-cffi's string output to bytes"""
         hash_string = self.ph.hash(password)
         return hash_string.encode('utf-8')
 
@@ -28,7 +28,7 @@ class AuthenticationService:
 
     @staticmethod
     def derive_aes_key(password: str, salt: bytes) -> bytes:
-        # Derives a 256-bit AES key from  password and salt using PBKDF2
+        """Derives a 256-bit AES key from password and salt using PBKDF2"""
         kdf = PBKDF2HMAC(
             algorithm = hashes.SHA256(),
             length = 32,  # 32 bytes = 256 bits (AES-256)
@@ -39,7 +39,7 @@ class AuthenticationService:
 
     @staticmethod
     def encrypt(plaintext: str, key: bytes) -> bytes:
-        # Encrypts a string with AES-256-GCM
+        """Encrypts a string with AES-256-GCM"""
         aesgcm = AESGCM(key)
         # GCM needs 96-bit or 12 byte nonce for every encryption
         nonce = os.urandom(12)
@@ -50,7 +50,7 @@ class AuthenticationService:
 
     @staticmethod
     def decrypt(ciphertext: bytes, key: bytes) -> str:
-        # Decrypts AES-256-GCM ciphertext back to string
+        """Decrypts AES-256-GCM ciphertext back to string"""
         aesgcm = AESGCM(key)
 
         # Extract 12-byte nonce

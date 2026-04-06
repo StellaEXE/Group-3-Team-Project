@@ -7,7 +7,6 @@ def test_singleton_identity():
     s2 = UserSession()
     assert s1 is s2
 
-
 def test_password_hashing():
     auth = AuthenticationService()
     password = "IvyTechSDEV265Project!"
@@ -16,7 +15,6 @@ def test_password_hashing():
     # Verify it's hashed and verifiable
     assert auth.verify_password(password, hashed) is True
     assert auth.verify_password("wrong_password", hashed) is False
-
 
 def test_encryption_decryption():
     auth = AuthenticationService()

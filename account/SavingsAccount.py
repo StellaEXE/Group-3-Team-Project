@@ -12,14 +12,14 @@ class SavingsAccount(Account):
         return self._interest_rate
 
     def calculate_monthly_interest(self) -> Decimal:
-        # Calculates monthly interest - (Balance * Rate) / 12 months
+        """Calculates monthly interest - (Balance * Rate) / 12 months"""
         monthly_rate = self._interest_rate / Decimal('12')
         interest_earned = self.balance * monthly_rate
 
         return interest_earned.quantize(Decimal('0.01'))
 
     def apply_interest(self):
-        # Applies the interest to the balance.
+        """Applies the interest to the balance"""
         earned = self.calculate_monthly_interest()
         self.deposit(earned)
         # Note: In your main app, trigger a Transaction(type="Savings Interest") here

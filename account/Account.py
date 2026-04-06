@@ -25,14 +25,14 @@ class Account(ABC):
         return self._balance
 
     def get_decrypted_number(self, key: bytes) -> str:
-        # Uses AuthenticationService to decrypt account number
+        """Uses AuthenticationService to decrypt account number"""
         return AuthenticationService.decrypt(self._enc_acc_num, key)
 
     def add_transaction(self, txn) -> None:
         self._transaction_history.append(txn)
 
     def remove_transaction(self, txn_id: UUID) -> None:
-        # Remove a transaction by UUID
+        """Remove a transaction by UUID"""
         self._transaction_history = [t for t in self._transaction_history if getattr(t, 'id', None) != txn_id]
 
     def get_transactions(self) -> List:

@@ -2,7 +2,12 @@ import sqlite3
 import uuid
 import os
 from datetime import datetime, timedelta
+from decimal import Decimal
+
+# --- INTERNAL IMPORTS ---
 from auth.AuthenticationService import AuthenticationService
+from transaction.Transaction import Transaction
+from transaction.TransactionRepository import TransactionRepository
 
 # --- CONFIGURATION ---
 DB_PATH = 'WealthTrackersDB.sqlite'
@@ -14,6 +19,7 @@ PHONE = "777-666-9999"
 
 def seed():
     auth = AuthenticationService()
+    txn_repo = TransactionRepository(DB_PATH)
     conn = None
     salt = os.urandom(16)
     password_hash = auth.hash_password(PASSWORD)
@@ -22,7 +28,6 @@ def seed():
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        # Enable foreign keys for the default_category_id link
         cursor.execute("PRAGMA foreign_keys = ON;")
         cursor.execute("BEGIN TRANSACTION;")
 
@@ -40,24 +45,29 @@ def seed():
                        VALUES (?, ?, ?, ?, ?, ?)
                        """, (USER_ID, USER_ID, password_hash, salt, enc_email, enc_phone))
 
-        # --- VENDOR SEEDING (With Default Categories) ---
-        # IDs based on category list: 3 = Electronic Deposit, 8 = Shopping, 9 = Entertainment, 10 = Bills, 11 = Food & Dining
+        # --- VENDOR SEEDING ---
+        # Storing (Vendor ID, Default Category ID) for object creation
+        # Categories: 3 = Electronic Deposit, 8 = Shopping, 9 = Entertainment, 10 = Bills, 11 = Food & Dining
         vendors_to_seed = [
-            ("MICRO CENTER", 8),
-            ("IVY TECH PAYROLL", 3),
-            ("ALI'I POKE", 11),
-            ("PANDA EXPRESS", 11),
-            ("DUKE ENERGY", 10),
-            ("DISCORD", 9),
-            ("TWITCH", 9),
-            ("HOYOVERSE", 9),
-            ("STEAM", 9)
+            ("MICRO CENTER", 8, "Shopping"),
+            ("IVY TECH PAYROLL", 3, "Electronic Deposit"),
+            ("ALI'I POKE", 11, "Food & Dining"),
+            ("PANDA EXPRESS", 11, "Food & Dining"),
+            ("DUKE ENERGY", 10, "Bills & Utilities"),
+            ("DISCORD", 9, "Entertainment"),
+            ("TWITCH", 9, "Entertainment"),
+            ("HOYOVERSE", 9, "Entertainment"),
+            ("STEAM", 9, "Entertainment")
         ]
 
         vendor_map = {}
-        for name, cat_id in vendors_to_seed:
+        for name, cat_id, cat_name in vendors_to_seed:
             cursor.execute("INSERT INTO vendors (vendor_name, default_category_id) VALUES (?, ?)", (name, cat_id))
-            vendor_map[name] = cursor.lastrowid
+            vendor_map[name] = {
+                "id": cursor.lastrowid,
+                "cat_id": cat_id,
+                "cat_name": cat_name
+            }
 
         # --- ACCOUNT CREATION ---
         # Checking
@@ -88,99 +98,84 @@ def seed():
         cursor.execute("INSERT INTO debit_card_details VALUES (?, ?, ?)",
                        (debit_id, auth.encrypt("111", session_key), checking_id))
 
-        # --- TRANSACTION SEEDING (One per Vendor) ---
+        conn.commit()  # Commit structural changes before using TransactionRepository
 
-        # Transaction 1: RTX 5090 Purchase (Shopping)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               3999.99, ?, 'EXPENSE')
-                       """, (str(uuid.uuid4()), credit_id, vendor_map["MICRO CENTER"],
-                             vendor_map["MICRO CENTER"], datetime.now().isoformat()))
+        # --- TRANSACTION SEEDING ---
+        # Using the TransactionRepository for object-oriented insertion
 
-        # Transaction 2: Monthly Salary (Electronic Deposit)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               3500.00, ?, 'INCOME')
-                       """, (str(uuid.uuid4()), checking_id, vendor_map["IVY TECH PAYROLL"],
-                             vendor_map["IVY TECH PAYROLL"], (datetime.now() - timedelta(days=5)).isoformat()))
+        # Transaction 1: RTX 5090 Purchase
+        vm = vendor_map["MICRO CENTER"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(credit_id), vm["id"], "MICRO CENTER",
+            vm["cat_id"], vm["cat_name"], Decimal("3999.99"), datetime.now(), 'EXPENSE'
+        ))
 
-        # Transaction 3: Poke Bowl Delivery (Food & Dining)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               35.39, ?, 'EXPENSE')
-                       """, (str(uuid.uuid4()), debit_id, vendor_map["ALI'I POKE"],
-                             vendor_map["ALI'I POKE"], datetime.now().isoformat()))
+        # Transaction 2: Monthly Salary
+        vm = vendor_map["IVY TECH PAYROLL"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(checking_id), vm["id"], "IVY TECH PAYROLL",
+            vm["cat_id"], vm["cat_name"], Decimal("3500.00"), datetime.now() - timedelta(days=5), 'INCOME'
+        ))
 
-        # Transaction 4: Panda Express Lunch (Food & Dining)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               15.45, ?, 'EXPENSE')
-                       """, (str(uuid.uuid4()), debit_id, vendor_map["PANDA EXPRESS"],
-                             vendor_map["PANDA EXPRESS"], datetime.now().isoformat()))
+        # Transaction 3: Poke Bowl Delivery
+        vm = vendor_map["ALI'I POKE"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(debit_id), vm["id"], "ALI'I POKE",
+            vm["cat_id"], vm["cat_name"], Decimal("35.39"), datetime.now(), 'EXPENSE'
+        ))
 
-        # Transaction 5: Monthly Electricity (Bills)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               142.50, ?, 'EXPENSE')
-                       """, (str(uuid.uuid4()), checking_id, vendor_map["DUKE ENERGY"],
-                             vendor_map["DUKE ENERGY"], datetime.now().isoformat()))
+        # Transaction 4: Panda Express Lunch
+        vm = vendor_map["PANDA EXPRESS"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(debit_id), vm["id"], "PANDA EXPRESS",
+            vm["cat_id"], vm["cat_name"], Decimal("15.45"), datetime.now(), 'EXPENSE'
+        ))
 
-        # Transaction 6: Discord Nitro (Entertainment)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               9.99, ?, 'EXPENSE')
-                       """, (str(uuid.uuid4()), credit_id, vendor_map["DISCORD"],
-                             vendor_map["DISCORD"], datetime.now().isoformat()))
+        # Transaction 5: Monthly Electricity
+        vm = vendor_map["DUKE ENERGY"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(checking_id), vm["id"], "DUKE ENERGY",
+            vm["cat_id"], vm["cat_name"], Decimal("142.50"), datetime.now(), 'EXPENSE'
+        ))
 
-        # Transaction 7: Twitch Subscription (Entertainment)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               5.99, ?, 'EXPENSE')
-                       """, (str(uuid.uuid4()), credit_id, vendor_map["TWITCH"],
-                             vendor_map["TWITCH"], datetime.now().isoformat()))
+        # Transaction 6: Discord Nitro
+        vm = vendor_map["DISCORD"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(credit_id), vm["id"], "DISCORD",
+            vm["cat_id"], vm["cat_name"], Decimal("9.99"), datetime.now(), 'EXPENSE'
+        ))
 
-        # Transaction 8: Gacha / In-game Currency (Entertainment)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               80.99, ?, 'EXPENSE')
-                       """, (str(uuid.uuid4()), credit_id, vendor_map["HOYOVERSE"],
-                             vendor_map["HOYOVERSE"], datetime.now().isoformat()))
+        # Transaction 7: Twitch Subscription
+        vm = vendor_map["TWITCH"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(credit_id), vm["id"], "TWITCH",
+            vm["cat_id"], vm["cat_name"], Decimal("5.99"), datetime.now(), 'EXPENSE'
+        ))
 
-        # Transaction 9: New PC Game (Entertainment)
-        cursor.execute("""
-                       INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount,
-                                                 transaction_date, transaction_type)
-                       VALUES (?, ?, ?, (SELECT default_category_id FROM vendors WHERE vendor_id = ?),
-                               59.99, ?, 'EXPENSE')
-                       """, (str(uuid.uuid4()), debit_id, vendor_map["STEAM"],
-                             vendor_map["STEAM"], datetime.now().isoformat()))
+        # Transaction 8: Gacha Spending
+        vm = vendor_map["HOYOVERSE"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(credit_id), vm["id"], "HOYOVERSE",
+            vm["cat_id"], vm["cat_name"], Decimal("80.99"), datetime.now(), 'EXPENSE'
+        ))
 
-        conn.commit()
+        # Transaction 9: New PC Game
+        vm = vendor_map["STEAM"]
+        txn_repo.save_transaction(Transaction(
+            uuid.uuid4(), uuid.UUID(debit_id), vm["id"], "STEAM",
+            vm["cat_id"], vm["cat_name"], Decimal("59.99"), datetime.now(), 'EXPENSE'
+        ))
+
         print(f"--- SEED COMPLETE ---")
         print(f"User: {USER_ID} | Vendors Seeded: {len(vendor_map)}")
-        print(f"Transactions Loaded: 9 (One per vendor)")
+        print(f"Transactions Loaded: 9 (Using TransactionRepository)")
 
     except Exception as e:
         if conn: conn.rollback()
         print(f"Critical Seed Failure: {e}")
     finally:
         if conn: conn.close()
+
 
 if __name__ == "__main__":
     seed()

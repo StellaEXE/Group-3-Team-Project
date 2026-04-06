@@ -9,7 +9,7 @@ class CreditCardAccount(Account):
         super().__init__(account_id, name, balance, enc_acc_num)
         self._enc_cvv = enc_cvv
         self._credit_limit = credit_limit
-        self._apr = apr  # Annual Percentage Rate
+        self._apr = apr
 
     @property
     def credit_limit(self) -> Decimal:
@@ -19,7 +19,7 @@ class CreditCardAccount(Account):
         return AuthenticationService.decrypt(self._enc_cvv, key)
 
     def calculate_interest_charge(self, overdue_amount: Decimal) -> Decimal:
-        # Calculates interest on overdue balance.
+        """Calculates interest on overdue balance."""
 
         if overdue_amount <= 0:
             return Decimal('0.00')
@@ -31,6 +31,6 @@ class CreditCardAccount(Account):
     def apply_interest_charge(self, overdue_amount: Decimal):
         charge = self.calculate_interest_charge(overdue_amount)
         if charge > 0:
-            # We use deposit because balance represents debt.
+            # We use deposit because balance represents debt for CCs
             self.deposit(charge)
         return charge
