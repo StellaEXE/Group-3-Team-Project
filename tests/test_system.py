@@ -9,22 +9,23 @@ from datetime import datetime
 from matplotlib.figure import Figure
 
 # --- SECURITY & STATE ---
-from auth.AuthenticationService import AuthenticationService
-from auth.UserSession import UserSession
+from core.auth.AuthenticationService import AuthenticationService
+from core.auth.UserSession import UserSession
 
 # --- DOMAIN MODELS ---
-from account.CheckingAccount import CheckingAccount
-from account.CreditCardAccount import CreditCardAccount
-from transaction.Transaction import Transaction
+from core.account.CheckingAccount import CheckingAccount
+from core.account.CreditCardAccount import CreditCardAccount
+from core.transaction.Transaction import Transaction
 
 # --- DATA PERSISTENCE ---
-from account.AccountRepository import AccountRepository
-from transaction.TransactionRepository import TransactionRepository
+from core.account.AccountRepository import AccountRepository
+from core.transaction.TransactionRepository import TransactionRepository
 
 # --- ANALYTICS & VISUALIZATION ---
-from analytics.AnalyticsProcessor import AnalyticsProcessor
-from visualizer.PieChartVisualizer import PieChartVisualizer
-from visualizer.BarGraphVisualizer import BarGraphVisualizer
+from core.analytics.AnalyticsProcessor import AnalyticsProcessor
+from core.visualizer.PieChartVisualizer import PieChartVisualizer
+from core.visualizer.BarGraphVisualizer import BarGraphVisualizer
+
 
 @pytest.fixture
 def integration_db():

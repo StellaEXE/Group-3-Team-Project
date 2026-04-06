@@ -7,11 +7,11 @@ import gc
 from decimal import Decimal
 from datetime import datetime
 
-from account.CheckingAccount import CheckingAccount
-from account.SavingsAccount import SavingsAccount
-from account.CreditCardAccount import CreditCardAccount
-from account.DebitCardAccount import DebitCardAccount
-from account.AccountRepository import AccountRepository
+from core.account.CheckingAccount import CheckingAccount
+from core.account.SavingsAccount import SavingsAccount
+from core.account.CreditCardAccount import CreditCardAccount
+from core.account.DebitCardAccount import DebitCardAccount
+from core.account.AccountRepository import AccountRepository
 
 
 # --- HELPERS FOR TESTING ---

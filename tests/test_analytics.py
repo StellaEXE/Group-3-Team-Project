@@ -3,11 +3,11 @@ import pytest
 from decimal import Decimal
 from unittest.mock import MagicMock
 
-from analytics.AnalyticsProcessor import AnalyticsProcessor
-from account.CheckingAccount import CheckingAccount
-from account.CreditCardAccount import CreditCardAccount
-from account.AccountRepository import AccountRepository
-from transaction.TransactionRepository import TransactionRepository
+from core.analytics.AnalyticsProcessor import AnalyticsProcessor
+from core.account.CheckingAccount import CheckingAccount
+from core.account.CreditCardAccount import CreditCardAccount
+from core.account.AccountRepository import AccountRepository
+from core.transaction.TransactionRepository import TransactionRepository
 
 
 @pytest.fixture

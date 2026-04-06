@@ -1,7 +1,8 @@
 import pytest
 
-from auth.UserSession import UserSession
-from auth.AuthenticationService import AuthenticationService
+from core.auth.UserSession import UserSession
+from core.auth.AuthenticationService import AuthenticationService
+
 
 def test_singleton_identity():
     # Verify UserSession is a strict singleton

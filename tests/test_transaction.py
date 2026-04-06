@@ -6,8 +6,9 @@ import tempfile
 import gc  # Force garbage collection
 from decimal import Decimal
 from datetime import datetime
-from transaction.Transaction import Transaction
-from transaction.TransactionRepository import TransactionRepository
+from core.transaction.Transaction import Transaction
+from core.transaction.TransactionRepository import TransactionRepository
+
 
 # --- FIXTURES (Setup/Teardown) ---
 

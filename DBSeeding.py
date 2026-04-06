@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 # --- INTERNAL IMPORTS ---
-from auth.AuthenticationService import AuthenticationService
-from transaction.Transaction import Transaction
-from transaction.TransactionRepository import TransactionRepository
+from core.auth import AuthenticationService
+from core.transaction.Transaction import Transaction
+from core.transaction.TransactionRepository import TransactionRepository
 
 # --- CONFIGURATION ---
 DB_PATH = 'WealthTrackersDB.sqlite'
