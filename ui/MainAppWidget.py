@@ -1,13 +1,11 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QLabel, QStackedWidget, QFrame, QMessageBox)
-from PyQt6.QtCore import Qt
 
-from ui.AddAccountDialog import AddAccountDialog
-from ui.DashboardWidget import DashboardWidget
-from ui.SpecificAccountWidget import SpecificAccountWidget
+from .AddAccountDialog import AddAccountDialog
+from .DashboardWidget import DashboardWidget
+from .SpecificAccountWidget import SpecificAccountWidget
 from core.account.AccountRepository import AccountRepository
 from core.auth.UserSession import UserSession
-
 
 class MainAppWidget(QWidget):
     def __init__(self, on_logout):
@@ -15,7 +13,7 @@ class MainAppWidget(QWidget):
         self.on_logout = on_logout
         self.session = UserSession()
         self.repo = AccountRepository("WealthTrackersDB.sqlite")
-        self.active_account_pages = {}  # Map index to account_id
+        self.active_account_map = {}  # Maps stack index to account_id
 
         self.setup_ui()
         self.load_user_accounts()
@@ -50,7 +48,7 @@ class MainAppWidget(QWidget):
         self.sidebar_layout.addStretch()
 
         # Action Buttons
-        self.delete_btn = QPushButton("🗑 Delete Account", objectName="sidebarBtn")
+        self.delete_btn = QPushButton("🗑 Delete Current Account", objectName="sidebarBtn")
         self.delete_btn.clicked.connect(self.trigger_delete_account)
         self.sidebar_layout.addWidget(self.delete_btn)
 
@@ -83,30 +81,35 @@ class MainAppWidget(QWidget):
             page = SpecificAccountWidget(acc)
             self.content_stack.addWidget(page)
             idx = self.content_stack.count() - 1
-            self.active_account_pages[idx] = acc.id
+            self.active_account_map[idx] = acc.id
 
             btn.clicked.connect(lambda checked, i=idx: self.content_stack.setCurrentIndex(i))
 
     def trigger_delete_account(self):
-        current_idx = self.content_stack.currentIndex()
-
-        if current_idx == 0:
-            QMessageBox.information(self, "Action Required", "Please select an account from the sidebar first.")
+        idx = self.content_stack.currentIndex()
+        if idx == 0:
+            QMessageBox.information(self, "Note", "Select an account to delete.")
             return
 
-        acc_id = self.active_account_pages.get(current_idx)
-        reply = QMessageBox.warning(self, 'Confirm Deletion',
-                                    "Are you sure? This will wipe ALL transactions for this account.",
-                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        acc_id = self.active_account_map.get(idx)
+        confirm = QMessageBox.warning(self, 'Delete Account', "Wipe all records for this account?",
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
-        if reply == QMessageBox.StandardButton.Yes:
+        if confirm == QMessageBox.StandardButton.Yes:
             if self.repo.delete_financial_account(acc_id):
                 self.refresh_ui()
                 self.content_stack.setCurrentIndex(0)
 
+    # --- THE FIX IS HERE ---
     def trigger_add_account(self):
-        if AddAccountDialog(self).exec():
-            self.refresh_ui()
+        dialog = AddAccountDialog(self)
+        if dialog.exec():
+            account_to_save = dialog.new_account
+
+            # Now we actually push the constructed account to the SQLite database!
+            if account_to_save and self.session.active_user_id:
+                self.repo.save_new_account(self.session.active_user_id, account_to_save)
+                self.refresh_ui()
 
     def refresh_ui(self):
         while self.accounts_layout.count():
@@ -118,9 +121,8 @@ class MainAppWidget(QWidget):
             self.content_stack.removeWidget(w)
             w.deleteLater()
 
-        self.active_account_pages = {}
+        self.active_account_map = {}
         self.load_user_accounts()
 
     def trigger_logout(self):
-        if QMessageBox.question(self, 'Logout', 'Confirm logout?') == QMessageBox.StandardButton.Yes:
-            self.on_logout()
+        self.on_logout()
