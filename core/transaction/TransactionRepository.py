@@ -3,7 +3,6 @@ from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
 from typing import List, Dict
-
 from core.transaction.Transaction import Transaction
 
 class TransactionRepository:
@@ -17,30 +16,43 @@ class TransactionRepository:
 
     def fetch_transactions(self, account_id: UUID) -> List[Transaction]:
         query = """
-            SELECT 
-                t.transaction_id, t.account_id, t.vendor_id, v.vendor_name, 
-                t.category_id, c.category_name, t.amount, t.transaction_date, t.transaction_type
+            SELECT t.transaction_id, t.account_id, t.vendor_id, v.vendor_name, 
+                   t.category_id, c.category_name, t.amount, t.transaction_date, t.transaction_type
             FROM transactions t
             JOIN vendors v ON t.vendor_id = v.vendor_id
             JOIN categories c ON t.category_id = c.category_id
             WHERE t.account_id = ?
             ORDER BY t.transaction_date DESC
         """
+        return self._execute_fetch(query, (str(account_id),))
+
+    def fetch_user_transactions(self, user_id: str) -> List[Transaction]:
+        """Fetches transactions for ALL accounts belonging to a user."""
+        query = """
+            SELECT t.transaction_id, t.account_id, t.vendor_id, v.vendor_name, 
+                   t.category_id, c.category_name, t.amount, t.transaction_date, t.transaction_type
+            FROM transactions t
+            JOIN accounts a ON t.account_id = a.account_id
+            JOIN vendors v ON t.vendor_id = v.vendor_id
+            JOIN categories c ON t.category_id = c.category_id
+            WHERE a.user_id = ?
+            ORDER BY t.transaction_date DESC LIMIT 50
+        """
+        return self._execute_fetch(query, (user_id,))
+
+    def _execute_fetch(self, query, params):
         transactions = []
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(query, (str(account_id),))
+            cursor.execute(query, params)
             for row in cursor.fetchall():
                 transactions.append(Transaction(
-                    txn_id = UUID(row[0]),
-                    account_id = UUID(row[1]),
-                    vendor_id = row[2],
-                    vendor_name = row[3],
-                    category_id = row[4],
-                    category_name = row[5],
-                    amount = Decimal(str(row[6])),
-                    date = datetime.fromisoformat(row[7]),
-                    txn_type = row[8]
+                    txn_id=UUID(row[0]), account_id=UUID(row[1]),
+                    vendor_id=row[2], vendor_name=row[3],
+                    category_id=row[4], category_name=row[5],
+                    amount=Decimal(str(row[6])),
+                    date=datetime.fromisoformat(row[7]),
+                    txn_type=row[8]
                 ))
         return transactions
 
@@ -50,62 +62,9 @@ class TransactionRepository:
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """
         with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (
-                str(txn_obj.id),
-                str(txn_obj.account_id),
-                txn_obj.vendor_id,
-                txn_obj.category_id,
-                float(txn_obj.amount),
-                txn_obj.date.isoformat(), # Fixed: Using public property
-                txn_obj.type
+            conn.execute(query, (
+                str(txn_obj.id), str(txn_obj.account_id), txn_obj.vendor_id,
+                txn_obj.category_id, float(txn_obj.amount),
+                txn_obj.date.isoformat(), txn_obj.type
             ))
             conn.commit()
-
-    def delete_transaction(self, txn_id: UUID) -> None:
-        query = "DELETE FROM transactions WHERE transaction_id = ?"
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (str(txn_id),))
-            conn.commit()
-
-    def update_category(self, txn_id: UUID, new_category_id: int) -> None:
-        query = "UPDATE transactions SET category_id = ? WHERE transaction_id = ?"
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (new_category_id, str(txn_id)))
-            conn.commit()
-
-    def get_total_spending_by_category(self, account_id: UUID) -> Dict[str, Decimal]:
-        query = """
-            SELECT c.category_name, SUM(t.amount)
-            FROM transactions t
-            JOIN categories c ON t.category_id = c.category_id
-            WHERE t.account_id = ? AND t.transaction_type = 'EXPENSE'
-            GROUP BY c.category_name
-        """
-        totals = {}
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (str(account_id),))
-            for row in cursor.fetchall():
-                totals[row[0]] = Decimal(str(row[1]))
-        return totals
-
-    def get_total_spending_by_vendor(self, account_id: UUID) -> Dict[str, Decimal]:
-        """Aggregates EXPENSE totals grouped by vendor name for a specific account."""
-        query = """
-                SELECT v.vendor_name, SUM(t.amount)
-                FROM transactions t
-                         JOIN vendors v ON t.vendor_id = v.vendor_id
-                WHERE t.account_id = ? \
-                  AND t.transaction_type = 'EXPENSE'
-                GROUP BY v.vendor_name \
-                """
-        totals = {}
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (str(account_id),))
-            for row in cursor.fetchall():
-                totals[row[0]] = Decimal(str(row[1]))
-        return totals
