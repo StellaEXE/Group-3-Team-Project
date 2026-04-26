@@ -30,15 +30,17 @@ CAPITAL_ONE_STYLE = """
         font-size: 13px;
     }
 
-    /* List Widgets (The Right Column Fix) */
+    /* FORCED LIGHT THEME FOR LISTS (Recent Activity) */
     QListWidget {
         background-color: white;
+        color: #333333;
         border: none;
         outline: none;
-        color: #333333;
         font-size: 14px;
     }
     QListWidget::item {
+        background-color: white;
+        color: #333333;
         padding: 12px;
         border-bottom: 1px solid #f0f0f0;
     }
@@ -48,14 +50,29 @@ CAPITAL_ONE_STYLE = """
         border-left: 4px solid #D22E1E;
     }
 
-    /* Inputs and Buttons */
+    /* INPUT BOXES (Login / Add Account Fix) */
     QLineEdit {
+        padding: 10px;
+        border: 1px solid #cccccc;
+        border-radius: 4px;
+        background-color: white;
+        color: #333333; /* Dark text */
+        font-size: 14px;
+    }
+    QLineEdit:focus {
+        border: 1px solid #004879;
+    }
+
+    /* Dropdown / Combo Styling */
+    QComboBox {
         padding: 10px;
         border: 1px solid #cccccc;
         border-radius: 4px;
         background-color: white;
         color: #333333;
     }
+
+    /* Buttons */
     QPushButton {
         background-color: #004879;
         color: white;
@@ -65,6 +82,7 @@ CAPITAL_ONE_STYLE = """
         font-weight: bold;
     }
     QPushButton:hover { background-color: #003a5c; }
+
     QPushButton#redButton { background-color: #D22E1E; }
     QPushButton#redButton:hover { background-color: #b02619; }
 
@@ -76,17 +94,5 @@ CAPITAL_ONE_STYLE = """
     }
     QPushButton#sidebarBtn:hover {
         background-color: #003a5c;
-    }
-
-    /* Scrollbars (To prevent the 90s grey look) */
-    QScrollBar:vertical {
-        border: none;
-        background: #F4F5F7;
-        width: 10px;
-    }
-    QScrollBar::handle:vertical {
-        background: #cccccc;
-        min-height: 20px;
-        border-radius: 5px;
     }
 """
