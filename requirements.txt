@@ -4,3 +4,4 @@ matplotlib
 pytest
 pytest-qt
 PyQt6
+pyqt6-sip

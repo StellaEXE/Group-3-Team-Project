@@ -2,7 +2,6 @@ from uuid import UUID
 from decimal import Decimal
 
 from core.account.Account import Account
-from core.auth.AuthenticationService import AuthenticationService
 
 class DebitCardAccount(Account):
     def __init__(self, account_id: UUID, name: str, balance: Decimal, enc_acc_num: bytes, enc_cvv: bytes, linked_checking_id: UUID):
