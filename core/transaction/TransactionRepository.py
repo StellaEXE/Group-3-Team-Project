@@ -7,7 +7,6 @@ from typing import List, Dict
 
 from core.transaction.Transaction import Transaction
 
-
 class TransactionRepository:
     def __init__(self, db_connection_path: str):
         self.db_path = db_connection_path
@@ -57,12 +56,12 @@ class TransactionRepository:
                 ORDER BY t.transaction_date DESC \
                 LIMIT 50 \
                 """
-
         return self._execute_fetch(query, (user_id,))
 
     def _execute_fetch(self, query, params):
         transactions = []
-        with self._get_connection() as conn:
+        conn = self._get_connection()
+        try:
             cursor = conn.cursor()
             cursor.execute(query, params)
             for row in cursor.fetchall():
@@ -74,33 +73,35 @@ class TransactionRepository:
                     date=datetime.fromisoformat(row[7]),
                     txn_type=row[8]
                 ))
+        finally:
+            conn.close()
 
         return transactions
 
     def save_transaction(self, txn_obj: Transaction) -> None:
-        """Saves transaction, auto-registering vendors with generic category as a fallback."""
-        with self._get_connection() as conn:
+        """Saves transaction, automatically registering vendors if they don't exist."""
+        conn = self._get_connection()
+        try:
             cursor = conn.cursor()
 
-            # 1. Resolve/Create Vendor
+            # 1. Resolve or Create Vendor
+            # We check by name to be safe
             cursor.execute("SELECT vendor_id FROM vendors WHERE vendor_name = ?", (txn_obj.vendor_name,))
             result = cursor.fetchone()
 
             if result:
                 vendor_id = result[0]
             else:
-                # Find the generic category ID based on the transaction type
                 placeholder = "General Expense" if txn_obj.type in ('EXPENSE', 'TRANSFER_OUT') else "General Income"
                 cursor.execute("SELECT category_id FROM categories WHERE category_name = ?", (placeholder,))
                 cat_res = cursor.fetchone()
-                # Fallback to ID 1 if the seed hasn't run yet
                 default_cat = cat_res[0] if cat_res else 1
 
                 cursor.execute("INSERT INTO vendors (vendor_name, default_category_id) VALUES (?, ?)",
                                (txn_obj.vendor_name, default_cat))
                 vendor_id = cursor.lastrowid
 
-            # 2. Save Transaction
+            # 2. Insert Transaction
             query = """
                     INSERT INTO transactions (transaction_id, account_id, vendor_id, category_id, amount, \
                                               transaction_date, transaction_type)
@@ -108,14 +109,10 @@ class TransactionRepository:
                     """
             cursor.execute(query, (
                 str(txn_obj.id), str(txn_obj.account_id), vendor_id,
-                txn_obj.category_id or default_cat, float(txn_obj.amount),
+                txn_obj.category_id, float(txn_obj.amount),
                 txn_obj.date.isoformat(), txn_obj.type
             ))
 
             conn.commit()
-
-    def update_category(self, txn_id: UUID, new_category_id: int) -> None:
-        query = "UPDATE transactions SET category_id = ? WHERE transaction_id = ?"
-        with self._get_connection() as conn:
-            conn.execute(query, (new_category_id, str(txn_id)))
-            conn.commit()
+        finally:
+            conn.close()  # CRITICAL FIX
