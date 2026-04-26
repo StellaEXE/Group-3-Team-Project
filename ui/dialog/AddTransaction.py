@@ -3,7 +3,8 @@ import sqlite3
 from decimal import Decimal
 from datetime import datetime
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QComboBox, QMessageBox)
+                             QLineEdit, QPushButton, QListWidget, QListWidgetItem,
+                             QMessageBox, QComboBox)
 from PyQt6.QtCore import Qt
 
 from core.transaction.Transaction import Transaction
@@ -11,15 +12,22 @@ from core.transaction.Transaction import Transaction
 from ui.dialog.AddVendor import AddVendor
 from ui.dialog.EditVendor import EditVendor
 
-
 class AddTransaction(QDialog):
     def __init__(self, account_id, parent=None):
         super().__init__(parent)
         self.account_id = account_id
         self.new_txn = None
+        self.selected_category_id = None
+        self.selected_vendor_id = None
+        self.selected_vendor_name = ""
+
+        self.all_categories = []
+        self.all_vendors = []
+
         self.setWindowTitle("Record Transaction")
-        self.setFixedSize(400, 480)
+        self.setFixedSize(450, 650)
         self.setup_ui()
+        self.load_initial_data()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -36,90 +44,169 @@ class AddTransaction(QDialog):
         self.type_dropdown.addItems(["EXPENSE", "INCOME", "TRANSFER_OUT", "TRANSFER_IN"])
         layout.addWidget(self.type_dropdown)
 
-        # Vendor Selection Row
-        layout.addWidget(QLabel("Vendor:"))
+        # Vendor Selection
+        layout.addWidget(QLabel("Search Vendor:"))
         vendor_row = QHBoxLayout()
-        self.vendor_dropdown = QComboBox()
-        self.load_vendors()
-        self.vendor_dropdown.currentIndexChanged.connect(self.auto_select_category)
-        vendor_row.addWidget(self.vendor_dropdown, stretch=1)
+        self.vendor_search = QLineEdit(placeholderText="Type to find vendor...")
+        self.vendor_search.textChanged.connect(self.filter_vendors)
+        vendor_row.addWidget(self.vendor_search)
 
-        # Add New Vendor
-        add_v_btn = QPushButton("+")
-        add_v_btn.setFixedWidth(35)
-        add_v_btn.clicked.connect(self.open_add_vendor)
-        vendor_row.addWidget(add_v_btn)
+        self.add_vendor_btn = QPushButton("+", objectName="actionButton")
+        self.add_vendor_btn.clicked.connect(self.open_add_vendor)
+        vendor_row.addWidget(self.add_vendor_btn)
 
-        # Edit Selected Vendor
-        edit_v_btn = QPushButton("✎")
-        edit_v_btn.setFixedWidth(35)
-        edit_v_btn.clicked.connect(self.open_edit_vendor)
-        vendor_row.addWidget(edit_v_btn)
+        self.edit_vendor_btn = QPushButton("...", objectName="actionButton")
+        self.edit_vendor_btn.clicked.connect(self.open_edit_vendor)
+        vendor_row.addWidget(self.edit_vendor_btn)
         layout.addLayout(vendor_row)
 
-        layout.addWidget(QLabel("Category:"))
-        self.category_dropdown = QComboBox()
-        self.load_categories()
-        layout.addWidget(self.category_dropdown)
+        self.vendor_list = QListWidget()
+        self.vendor_list.setVisible(False)
+        self.vendor_list.itemClicked.connect(self.handle_vendor_selection)
+        layout.addWidget(self.vendor_list)
 
-        layout.addStretch()
+        # Category Selection
+        layout.addWidget(QLabel("Search Category:"))
+        cat_search_row = QHBoxLayout()
+        self.cat_search = QLineEdit(placeholderText="Type to find category...")
+        self.cat_search.textChanged.connect(self.filter_categories)
+        cat_search_row.addWidget(self.cat_search)
+
+        self.add_cat_btn = QPushButton("+", objectName="actionButton")
+        self.add_cat_btn.clicked.connect(self.handle_add_new_category)
+        cat_search_row.addWidget(self.add_cat_btn)
+        layout.addLayout(cat_search_row)
+
+        self.cat_list = QListWidget()
+        self.cat_list.setVisible(False)
+        self.cat_list.itemClicked.connect(self.handle_category_selection)
+        layout.addWidget(self.cat_list)
+
+        self.status_label = QLabel("Vendor: None | Category: None",
+                                   styleSheet="color: #004879; font-weight: bold;")
+        layout.addWidget(self.status_label)
+
         save_btn = QPushButton("Save Transaction", objectName="redButton")
         save_btn.clicked.connect(self.handle_save)
         layout.addWidget(save_btn)
 
-    def load_vendors(self):
-        self.vendor_dropdown.clear()
+    def load_initial_data(self):
         conn = sqlite3.connect("WealthTrackersDB.sqlite")
-
-        for row in conn.execute("SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name"):
-            self.vendor_dropdown.addItem(row[1], row[0])
+        self.all_vendors = conn.execute(
+            "SELECT vendor_id, vendor_name, default_category_id FROM vendors ORDER BY vendor_name").fetchall()
+        self.all_categories = conn.execute(
+            "SELECT category_id, category_name FROM categories ORDER BY category_name").fetchall()
 
         conn.close()
 
-    def load_categories(self):
-        self.category_dropdown.clear()
-        conn = sqlite3.connect("WealthTrackersDB.sqlite")
+    def filter_vendors(self, text):
+        self.vendor_list.clear()
 
-        for row in conn.execute("SELECT category_id, category_name FROM categories ORDER BY category_name"):
-            self.category_dropdown.addItem(row[1], row[0])
+        if not text.strip():
+            self.vendor_list.setVisible(False)
+            return
 
-        conn.close()
+        matches = [v for v in self.all_vendors if text.lower() in v[1].lower()]
 
-    def auto_select_category(self):
-        v_id = self.vendor_dropdown.currentData()
-        if not v_id: return
+        if matches:
+            self.vendor_list.setVisible(True)
 
-        conn = sqlite3.connect("WealthTrackersDB.sqlite")
-        cursor = conn.cursor()
-        cursor.execute("SELECT default_category_id FROM vendors WHERE vendor_id = ?", (v_id,))
-        row = cursor.fetchone()
-        if row:
-            idx = self.category_dropdown.findData(row[0])
-            if idx >= 0: self.category_dropdown.setCurrentIndex(idx)
+            for v_id, v_name, def_cat in matches:
+                item = QListWidgetItem(v_name)
+                item.setData(Qt.ItemDataRole.UserRole, (v_id, def_cat))
+                self.vendor_list.addItem(item)
+        else:
+            self.vendor_list.setVisible(False)
 
-        conn.close()
+    def handle_vendor_selection(self, item):
+        v_id, def_cat_id = item.data(Qt.ItemDataRole.UserRole)
+        self.selected_vendor_id = v_id
+        self.selected_vendor_name = item.text()
+        self.vendor_search.setText(item.text())
+        self.vendor_list.setVisible(False)
+        self.apply_category_id(def_cat_id)
+        self.update_status()
+
+    def filter_categories(self, text):
+        self.cat_list.clear()
+
+        if not text.strip():
+            self.cat_list.setVisible(False)
+            return
+
+        matches = [c for c in self.all_categories if text.lower() in c[1].lower()]
+
+        if matches:
+            self.cat_list.setVisible(True)
+
+            for c_id, c_name in matches:
+                item = QListWidgetItem(c_name)
+                item.setData(Qt.ItemDataRole.UserRole, c_id)
+                self.cat_list.addItem(item)
+        else:
+            self.cat_list.setVisible(False)
+
+    def handle_category_selection(self, item):
+        self.selected_category_id = item.data(Qt.ItemDataRole.UserRole)
+        self.cat_search.setText(item.text())
+        self.cat_list.setVisible(False)
+        self.update_status()
+
+    def apply_category_id(self, cat_id):
+        self.selected_category_id = cat_id
+
+        for c_id, c_name in self.all_categories:
+            if c_id == cat_id:
+                self.cat_search.setText(c_name)
+                break
+
+    def handle_add_new_category(self):
+        name = self.cat_search.text().strip()
+        if not name: return
+
+        try:
+            conn = sqlite3.connect("WealthTrackersDB.sqlite")
+            conn.execute("INSERT INTO categories (category_name) VALUES (?)", (name,))
+            conn.commit()
+            conn.close()
+            self.load_initial_data()
+            self.filter_categories(name)
+        except sqlite3.IntegrityError:
+            QMessageBox.warning(self, "Error", "Category already exists.")
+
+    def update_status(self):
+        v_name = self.selected_vendor_name if self.selected_vendor_name else "None"
+        c_name = "None"
+
+        for c_id, name in self.all_categories:
+            if c_id == self.selected_category_id:
+                c_name = name
+                break
+
+        self.status_label.setText(f"Vendor: {v_name} | Category: {c_name}")
 
     def open_add_vendor(self):
-        if AddVendor(self).exec(): self.load_vendors()
+        if AddVendor(self).exec():
+            self.load_initial_data()
 
     def open_edit_vendor(self):
-        v_id = self.vendor_dropdown.currentData()
-
-        if v_id and EditVendor(v_id, self).exec():
-            self.load_vendors()
-            self.auto_select_category()
+        if self.selected_vendor_id and EditVendor(self.selected_vendor_id, self).exec():
+            self.load_initial_data()
 
     def handle_save(self):
         try:
-            amt = Decimal(self.amount_input.text().strip())
-            v_name = self.vendor_dropdown.currentText()
-            v_id = self.vendor_dropdown.currentData()
-            c_id = self.category_dropdown.currentData()
-            t_type = self.type_dropdown.currentText()
+            raw_amt = self.amount_input.text().strip()
+            if not raw_amt: raise ValueError("Amount required")
+            amt = Decimal(raw_amt)
+            if not self.selected_vendor_id: raise ValueError("Select a vendor")
+            if not self.selected_category_id: raise ValueError("Select a category")
 
-            self.new_txn = Transaction(uuid.uuid4(), self.account_id, v_id, v_name,
-                                       c_id, "", amt, datetime.now(), t_type)
-
+            self.new_txn = Transaction(
+                uuid.uuid4(), self.account_id, self.selected_vendor_id, self.selected_vendor_name,
+                self.selected_category_id, "", amt, datetime.now(),
+                self.type_dropdown.currentText()
+            )
+            
             self.accept()
-        except:
-            QMessageBox.warning(self, "Error", "Invalid amount.")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", str(e))

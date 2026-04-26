@@ -1,3 +1,12 @@
+"""
+This entire thing is just a disgusting piece of crap that should never ever
+have existed. UI designing LOOOOVEEES QSS/CSS styles which just pisses me off
+as this stuff NEVER is useful to learn. It's not real programming and all it
+does is trying to larp as someone doing something useful when AI can just handle
+all of this with little to no issue. Without AI I would never touch this part
+of programming/project design EVER since it is just a massive waste of time.
+"""
+
 CAPITAL_ONE_STYLE = """
     /* Global Backgrounds */
     QMainWindow, QDialog, QMessageBox, QStackedWidget, QWidget#central {
@@ -26,14 +35,17 @@ CAPITAL_ONE_STYLE = """
         color: #004879;
     }
 
-    /* THE BIG FIX: Force all inputs to have dark text and white backgrounds */
-    QLineEdit, QComboBox, QSpinBox, QDateEdit {
-        padding: 8px;
-        border: 1px solid #cccccc;
-        border-radius: 4px;
+    /* THE BIG FIX: Force all inputs and the list sidebar to white background */
+    QLineEdit, QComboBox, QSpinBox, QDateEdit, QListWidget, QListWidget::viewport {
         background-color: white !important;
         color: #333333 !important; 
-        selection-background-color: #004879;
+        border: 1px solid #cccccc;
+        border-radius: 4px;
+        padding: 8px;
+    }
+
+    QListWidget {
+        border: none; /* Keep the sidebar list clean */
     }
 
     /* Ensure the dropdown list inside the combo box is also styled */
@@ -56,6 +68,13 @@ CAPITAL_ONE_STYLE = """
     QPushButton:hover { background-color: #003a5c; }
     QPushButton#redButton { background-color: #D22E1E; }
     QPushButton#redButton:hover { background-color: #b02619; }
+
+    /* Small Action Buttons (for + and ...) */
+    QPushButton#actionButton {
+        padding: 5px;
+        font-size: 16px;
+        min-width: 35px;
+    }
 
     QPushButton#sidebarBtn {
         background-color: transparent;
