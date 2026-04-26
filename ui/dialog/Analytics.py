@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel
 
-
-class AnalyticsDialog(QDialog):
+class Analytics(QDialog):
     def __init__(self, parent=None, account_name="All Accounts"):
         super().__init__(parent)
 

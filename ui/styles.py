@@ -25,51 +25,23 @@ CAPITAL_ONE_STYLE = """
         font-weight: bold;
         color: #004879;
     }
-    QLabel#subtext {
-        color: #666666;
-        font-size: 13px;
-    }
 
-    /* FORCED LIGHT THEME FOR LISTS (Recent Activity) */
-    QListWidget {
-        background-color: white;
-        color: #333333;
-        border: none;
-        outline: none;
-        font-size: 14px;
-    }
-    QListWidget::item {
-        background-color: white;
-        color: #333333;
-        padding: 12px;
-        border-bottom: 1px solid #f0f0f0;
-    }
-    QListWidget::item:selected {
-        background-color: #e6f2ff;
-        color: #004879;
-        border-left: 4px solid #D22E1E;
-    }
-
-    /* INPUT BOXES (Login / Add Account Fix) */
-    QLineEdit {
-        padding: 10px;
+    /* THE BIG FIX: Force all inputs to have dark text and white backgrounds */
+    QLineEdit, QComboBox, QSpinBox, QDateEdit {
+        padding: 8px;
         border: 1px solid #cccccc;
         border-radius: 4px;
-        background-color: white;
-        color: #333333; /* Dark text */
-        font-size: 14px;
-    }
-    QLineEdit:focus {
-        border: 1px solid #004879;
+        background-color: white !important;
+        color: #333333 !important; 
+        selection-background-color: #004879;
     }
 
-    /* Dropdown / Combo Styling */
-    QComboBox {
-        padding: 10px;
-        border: 1px solid #cccccc;
-        border-radius: 4px;
+    /* Ensure the dropdown list inside the combo box is also styled */
+    QComboBox QAbstractItemView {
         background-color: white;
         color: #333333;
+        selection-background-color: #004879;
+        selection-color: white;
     }
 
     /* Buttons */
@@ -82,7 +54,6 @@ CAPITAL_ONE_STYLE = """
         font-weight: bold;
     }
     QPushButton:hover { background-color: #003a5c; }
-
     QPushButton#redButton { background-color: #D22E1E; }
     QPushButton#redButton:hover { background-color: #b02619; }
 
@@ -92,7 +63,5 @@ CAPITAL_ONE_STYLE = """
         text-align: left;
         padding: 12px;
     }
-    QPushButton#sidebarBtn:hover {
-        background-color: #003a5c;
-    }
+    QPushButton#sidebarBtn:hover { background-color: #003a5c; }
 """

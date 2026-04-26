@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFrame, QLabel, QLineEdit, QP
 from core.auth.AuthenticationService import AuthenticationService
 from core.auth.UserSession import UserSession
 
-class LoginWidget(QWidget):
+class Login(QWidget):
     def __init__(self, on_login_success):
         super().__init__()
         self.on_login_success = on_login_success

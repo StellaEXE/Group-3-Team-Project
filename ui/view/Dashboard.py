@@ -1,17 +1,20 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QFrame,
-                             QLabel, QComboBox, QPushButton, QListWidget)
+                             QLabel, QComboBox, QPushButton)
 
-from ui.AnalyticsDialogue import AnalyticsDialog
+from ui.dialog.Analytics import Analytics
+from ui.component.TransactionList import TransactionList
 
 from core.transaction.TransactionRepository import TransactionRepository
 from core.auth.UserSession import UserSession
 
-class DashboardWidget(QWidget):
+
+class Dashboard(QWidget):
     def __init__(self):
         super().__init__()
         self.repo = TransactionRepository("WealthTrackersDB.sqlite")
         self.session = UserSession()
+
         self.setup_ui()
         self.refresh_data()
 
@@ -33,7 +36,8 @@ class DashboardWidget(QWidget):
         header_layout.addWidget(self.chart_dropdown, alignment=Qt.AlignmentFlag.AlignRight)
         card_layout.addLayout(header_layout)
 
-        self.chart_placeholder = QLabel("Add an account to start")
+        # Placeholder for the future graph integration
+        self.chart_placeholder = QLabel("Transaction data visualization goes here")
         self.chart_placeholder.setObjectName("subtext")
         self.chart_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         card_layout.addWidget(self.chart_placeholder, stretch=1)
@@ -47,7 +51,7 @@ class DashboardWidget(QWidget):
         # --- Right Column: Transactions & Totals ---
         right_layout = QVBoxLayout()
 
-        # Totals Card
+        # Totals Summary Card
         totals_card = QFrame(objectName="card")
         t_layout = QVBoxLayout(totals_card)
         self.total_spending_label = QLabel("Total Spending: $0.00", objectName="header")
@@ -58,9 +62,10 @@ class DashboardWidget(QWidget):
         # Recent Activity Card
         recent_card = QFrame(objectName="card")
         r_layout = QVBoxLayout(recent_card)
-        r_layout.addWidget(QLabel("Recent Activity (All Accounts)", objectName="header"))
+        r_layout.addWidget(QLabel("Recent Activity (Global)", objectName="header"))
 
-        self.tx_list = QListWidget()
+        # Using the new reusable component
+        self.tx_list = TransactionList()
         r_layout.addWidget(self.tx_list)
 
         right_layout.addWidget(totals_card)
@@ -70,11 +75,9 @@ class DashboardWidget(QWidget):
         layout.addLayout(right_layout, stretch=1)
 
     def refresh_data(self):
-        """Fetches transactions for all user accounts and updates the dashboard."""
-        self.tx_list.clear()
+        """Calculates global totals and refreshes the transaction component."""
         user_id = self.session.active_user_id
         if not user_id:
-            self.tx_list.addItem("Please log in to view transactions.")
             return
 
         transactions = self.repo.fetch_user_transactions(user_id)
@@ -82,25 +85,21 @@ class DashboardWidget(QWidget):
         total_spent = 0
         total_income = 0
 
-        if not transactions:
-            self.tx_list.addItem("No recent transactions found.")
-        else:
-            for tx in transactions:
-                # Calculate totals
-                if tx.type == "EXPENSE":
-                    total_spent += tx.amount
-                    sign = "-"
-                else:
-                    total_income += tx.amount
-                    sign = "+"
+        # Calculate totals from the full list
+        for tx in transactions:
+            if tx.type in ("EXPENSE", "TRANSFER_OUT"):
+                total_spent += tx.amount
+            elif tx.type in ("INCOME", "TRANSFER_IN"):
+                total_income += tx.amount
 
-                # Format list item
-                date_str = tx.date.strftime("%b %d")
-                self.tx_list.addItem(f"{date_str}   {tx.vendor_name}   {sign}${tx.amount:,.2f}")
-
+        # Update labels
         self.total_spending_label.setText(f"Total Spending: ${total_spent:,.2f}")
         self.total_income_label.setText(f"Total Money In: ${total_income:,.2f}")
 
+        # Let the component handle the list formatting
+        self.tx_list.update_with_data(transactions)
+
     def show_detailed_analytics(self):
-        dlg = AnalyticsDialog(self)
+        """Opens the analytics dialog for a deeper dive into categories."""
+        dlg = Analytics(self)
         dlg.exec()

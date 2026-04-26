@@ -5,9 +5,9 @@ from PyQt6.QtCore import Qt
 from core.account.Account import Account
 from core.transaction.TransactionRepository import TransactionRepository
 
-from ui.AddTransactionDialog import AddTransactionDialog
+from ui.dialog.AddTransaction import AddTransaction
 
-class SpecificAccountWidget(QWidget):
+class SpecificAccount(QWidget):
     def __init__(self, account: Account):
         super().__init__()
         self.account = account
@@ -66,7 +66,7 @@ class SpecificAccountWidget(QWidget):
 
     def trigger_add_transaction(self):
         """Opens the dialog and saves the new transaction if accepted."""
-        dialog = AddTransactionDialog(self.account.id, self)
+        dialog = AddTransaction(self.account.id, self)
         if dialog.exec():
             new_txn = dialog.new_txn
             if new_txn:

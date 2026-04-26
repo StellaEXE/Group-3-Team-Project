@@ -11,7 +11,7 @@ from core.account.SavingsAccount import SavingsAccount
 from core.account.CreditCardAccount import CreditCardAccount
 from core.account.DebitCardAccount import DebitCardAccount
 
-class AddAccountDialog(QDialog):
+class AddAccount(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Add Financial Account")
@@ -111,7 +111,7 @@ class AddAccountDialog(QDialog):
             elif acc_type == "Debit Card":
                 enc_cvv = AuthenticationService.encrypt(self.dc_cvv.text(), session_key)
                 self.new_account = DebitCardAccount(acc_id, name, balance, enc_acc_num, enc_cvv, uuid.UUID(self.dc_linked_id.text()))
-                
+
             self.accept()
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to create account: {e}")

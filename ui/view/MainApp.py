@@ -1,13 +1,15 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QLabel, QStackedWidget, QFrame, QMessageBox)
 
-from .AddAccountDialog import AddAccountDialog
-from .DashboardWidget import DashboardWidget
-from .SpecificAccountWidget import SpecificAccountWidget
+from ui.dialog.AddAccount import AddAccount
+from ui.view.Dashboard import Dashboard
+from ui.view.SpecificAccount import SpecificAccount
+
 from core.account.AccountRepository import AccountRepository
 from core.auth.UserSession import UserSession
 
-class MainAppWidget(QWidget):
+
+class MainApp(QWidget):
     def __init__(self, on_logout):
         super().__init__()
         self.on_logout = on_logout
@@ -47,7 +49,6 @@ class MainAppWidget(QWidget):
 
         self.sidebar_layout.addStretch()
 
-        # Action Buttons
         self.delete_btn = QPushButton("🗑 Delete Current Account", objectName="sidebarBtn")
         self.delete_btn.clicked.connect(self.trigger_delete_account)
         self.sidebar_layout.addWidget(self.delete_btn)
@@ -56,9 +57,10 @@ class MainAppWidget(QWidget):
         self.logout_btn.clicked.connect(self.trigger_logout)
         self.sidebar_layout.addWidget(self.logout_btn)
 
-        # --- Content ---
+        # --- Content Stack ---
         self.content_stack = QStackedWidget()
-        self.content_stack.addWidget(DashboardWidget())
+        self.dashboard_page = Dashboard()
+        self.content_stack.addWidget(self.dashboard_page)
         self.dash_btn.clicked.connect(lambda: self.content_stack.setCurrentIndex(0))
 
         self.layout.addWidget(self.sidebar)
@@ -78,40 +80,22 @@ class MainAppWidget(QWidget):
             btn = QPushButton(display, objectName="sidebarBtn")
             self.accounts_layout.addWidget(btn)
 
-            page = SpecificAccountWidget(acc)
+            page = SpecificAccount(acc)
             self.content_stack.addWidget(page)
             idx = self.content_stack.count() - 1
             self.active_account_map[idx] = acc.id
 
             btn.clicked.connect(lambda checked, i=idx: self.content_stack.setCurrentIndex(i))
 
-    def trigger_delete_account(self):
-        idx = self.content_stack.currentIndex()
-        if idx == 0:
-            QMessageBox.information(self, "Note", "Select an account to delete.")
-            return
-
-        acc_id = self.active_account_map.get(idx)
-        confirm = QMessageBox.warning(self, 'Delete Account', "Wipe all records for this account?",
-                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-
-        if confirm == QMessageBox.StandardButton.Yes:
-            if self.repo.delete_financial_account(acc_id):
-                self.refresh_ui()
-                self.content_stack.setCurrentIndex(0)
-
-    # --- THE FIX IS HERE ---
     def trigger_add_account(self):
-        dialog = AddAccountDialog(self)
+        dialog = AddAccount(self)
         if dialog.exec():
-            account_to_save = dialog.new_account
-
-            # Now we actually push the constructed account to the SQLite database!
-            if account_to_save and self.session.active_user_id:
-                self.repo.save_new_account(self.session.active_user_id, account_to_save)
+            if dialog.new_account and self.session.active_user_id:
+                self.repo.save_new_account(self.session.active_user_id, dialog.new_account)
                 self.refresh_ui()
 
     def refresh_ui(self):
+        # Full clear of sidebar account buttons
         while self.accounts_layout.count():
             item = self.accounts_layout.takeAt(0)
             if item.widget(): item.widget().deleteLater()
@@ -123,6 +107,19 @@ class MainAppWidget(QWidget):
 
         self.active_account_map = {}
         self.load_user_accounts()
+        # Refresh the dashboard data
+        self.dashboard_page.refresh_data()
+
+    def trigger_delete_account(self):
+        idx = self.content_stack.currentIndex()
+        if idx == 0: return  # Can't delete the dashboard
+
+        acc_id = self.active_account_map.get(idx)
+        if QMessageBox.warning(self, 'Confirm', "Delete this account?",
+                               QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
+            if self.repo.delete_financial_account(acc_id):
+                self.refresh_ui()
+                self.content_stack.setCurrentIndex(0)
 
     def trigger_logout(self):
         self.on_logout()
