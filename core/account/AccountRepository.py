@@ -133,3 +133,19 @@ class AccountRepository:
                     (str(account.id), account._enc_cvv, str(account.linked_checking_id)))
 
             conn.commit()
+
+    def delete_financial_account(self, account_id: UUID) -> bool:
+        """Permanently removes an account. Cascades automatically to transactions and detail tables."""
+        query = "DELETE FROM accounts WHERE account_id = ?"
+
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                # The parameterized query handles the UUID string safely
+                cursor.execute(query, (str(account_id),))
+                conn.commit()
+
+                return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Database execution error: {e}")
+            return False
