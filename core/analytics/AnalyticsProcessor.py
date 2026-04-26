@@ -46,6 +46,7 @@ class AnalyticsProcessor:
     def format_category_data_for_charts(self, account_id: UUID) -> Dict[str, float]:
         """Fetches category spending and converts Decimals to floats for PyQt"""
         raw_data = self._txn_repo.get_total_spending_by_category(account_id)
+
         return {category: float(amount) for category, amount in raw_data.items()}
 
     def format_vendor_data_for_charts(self, account_id: UUID) -> Dict[str, float]:

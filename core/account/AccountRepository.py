@@ -1,5 +1,6 @@
 import sqlite3
 import uuid
+
 from uuid import UUID
 from decimal import Decimal
 from typing import List
@@ -17,7 +18,7 @@ class AccountRepository:
     def _get_connection(self):
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA foreign_keys = ON;")
-        
+
         return conn
 
     def fetch_all_accounts(self, user_id: str) -> List[Account]:
@@ -71,6 +72,7 @@ class AccountRepository:
                 """
 
         accounts = []
+
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(query, (user_id,))
@@ -143,6 +145,7 @@ class AccountRepository:
                 cursor = conn.cursor()
                 cursor.execute("DELETE FROM accounts WHERE account_id = ?", (str(account_id),))
                 conn.commit()
+
                 return cursor.rowcount > 0
         except sqlite3.Error:
             return False

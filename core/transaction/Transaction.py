@@ -1,7 +1,6 @@
 from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
-from typing import Dict, Any
 
 class Transaction:
     def __init__(self, txn_id: UUID, account_id: UUID, vendor_id: int, vendor_name: str,

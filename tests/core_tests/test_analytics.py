@@ -1,5 +1,6 @@
 import uuid
 import pytest
+
 from decimal import Decimal
 from unittest.mock import MagicMock
 
@@ -8,7 +9,6 @@ from core.account.CheckingAccount import CheckingAccount
 from core.account.CreditCardAccount import CreditCardAccount
 from core.account.AccountRepository import AccountRepository
 from core.transaction.TransactionRepository import TransactionRepository
-
 
 @pytest.fixture
 def mock_repos():

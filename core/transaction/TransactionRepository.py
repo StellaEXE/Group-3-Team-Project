@@ -1,5 +1,6 @@
 import sqlite3
 import uuid
+
 from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
@@ -56,11 +57,13 @@ class TransactionRepository:
                 ORDER BY t.transaction_date DESC \
                 LIMIT 50 \
                 """
+
         return self._execute_fetch(query, (user_id,))
 
     def _execute_fetch(self, query, params):
         transactions = []
         conn = self._get_connection()
+
         try:
             cursor = conn.cursor()
             cursor.execute(query, params)
@@ -81,6 +84,7 @@ class TransactionRepository:
     def save_transaction(self, txn_obj: Transaction) -> None:
         """Saves transaction, automatically registering vendors if they don't exist."""
         conn = self._get_connection()
+
         try:
             cursor = conn.cursor()
 
@@ -116,3 +120,47 @@ class TransactionRepository:
             conn.commit()
         finally:
             conn.close()  # CRITICAL FIX
+
+    def delete_transaction(self, transaction_id: UUID) -> None:
+        """Deletes a transaction from the database."""
+        query = "DELETE FROM transactions WHERE transaction_id = ?"
+        conn = self._get_connection()
+
+        try:
+            conn.execute(query, (str(transaction_id),))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_total_spending_by_category(self, account_id: UUID) -> Dict[str, Decimal]:
+        """Aggregates spending by category for a specific account."""
+        query = """
+                SELECT c.category_name, SUM(t.amount)
+                FROM transactions t
+                         JOIN categories c ON t.category_id = c.category_id
+                WHERE t.account_id = ? \
+                  AND t.transaction_type = 'EXPENSE'
+                GROUP BY c.category_name \
+                """
+        spending = {}
+        conn = self._get_connection()
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query, (str(account_id),))
+            for row in cursor.fetchall():
+                spending[row[0]] = Decimal(str(row[1]))
+        finally:
+            conn.close()
+
+        return spending
+
+    def update_category(self, txn_id: UUID, new_category_id: int) -> None:
+        query = "UPDATE transactions SET category_id = ? WHERE transaction_id = ?"
+        conn = self._get_connection()
+
+        try:
+            conn.execute(query, (new_category_id, str(txn_id)))
+            conn.commit()
+        finally:
+            conn.close()

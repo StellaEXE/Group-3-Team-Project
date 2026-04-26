@@ -1,9 +1,9 @@
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+
+from matplotlib.figure import Figure
 from typing import Dict
 
 from core.visualizer.ChartFactory import ChartFactory
-
 
 class PieChartVisualizer(ChartFactory):
     def render(self, data_dict: Dict[str, float], title: str = "") -> Figure:
@@ -37,5 +37,7 @@ class PieChartVisualizer(ChartFactory):
         plt.setp(texts, size=10)
 
         ax.set_title(title, fontsize=12, fontweight='bold', pad=10)
+
         fig.tight_layout()
+
         return fig

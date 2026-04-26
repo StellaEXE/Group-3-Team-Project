@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Dict
 from matplotlib.figure import Figure
 
-
 class ChartFactory(ABC):
     """Abstract base class for all chart visualizers"""
 

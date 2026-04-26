@@ -4,6 +4,7 @@ import sqlite3
 import pytest
 import tempfile
 import gc
+
 from decimal import Decimal
 from datetime import datetime
 
@@ -12,7 +13,6 @@ from core.account.SavingsAccount import SavingsAccount
 from core.account.CreditCardAccount import CreditCardAccount
 from core.account.DebitCardAccount import DebitCardAccount
 from core.account.AccountRepository import AccountRepository
-
 
 # --- HELPERS FOR TESTING ---
 class MockTransaction:
@@ -71,6 +71,7 @@ def temp_db():
     yield db_path
 
     gc.collect()
+
     if os.path.exists(db_path):
         try:
             os.remove(db_path)

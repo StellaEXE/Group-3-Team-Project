@@ -3,7 +3,6 @@ from typing import Dict
 
 from core.visualizer.ChartFactory import ChartFactory
 
-
 class BarGraphVisualizer(ChartFactory):
     def render(self, data_dict: Dict[str, float], title: str = "") -> Figure:
         # Use a white background
@@ -40,4 +39,5 @@ class BarGraphVisualizer(ChartFactory):
                         fontsize=8, fontweight='bold', color='#444444')
 
         fig.tight_layout()
+
         return fig

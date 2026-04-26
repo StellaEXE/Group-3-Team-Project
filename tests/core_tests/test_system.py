@@ -4,6 +4,7 @@ import sqlite3
 import pytest
 import tempfile
 import gc
+
 from decimal import Decimal
 from datetime import datetime
 from matplotlib.figure import Figure
@@ -25,7 +26,6 @@ from core.transaction.TransactionRepository import TransactionRepository
 from core.analytics.AnalyticsProcessor import AnalyticsProcessor
 from core.visualizer.PieChartVisualizer import PieChartVisualizer
 from core.visualizer.BarGraphVisualizer import BarGraphVisualizer
-
 
 @pytest.fixture
 def integration_db():
@@ -77,7 +77,9 @@ def integration_db():
 
     # Clear Singleton and temp files
     UserSession().clear_session()
+
     gc.collect()
+
     if os.path.exists(db_path):
         try:
             os.remove(db_path)
@@ -143,6 +145,7 @@ def test_full_system_workflow(integration_db):
 
     # Verify Account Balance Reconstruction
     accounts = acc_repo.fetch_all_accounts(user_id)
+
     # Check balance of specific account objects
     for acc in accounts:
         if acc.id == check_id: assert acc.balance == Decimal('2000.00')

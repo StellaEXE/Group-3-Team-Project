@@ -1,4 +1,3 @@
-
 from uuid import UUID
 from decimal import Decimal
 
@@ -28,6 +27,7 @@ class CreditCardAccount(Account):
 
         monthly_apr = self._apr / Decimal('12')
         charge = overdue_amount * monthly_apr
+
         return charge.quantize(Decimal('0.01'))
 
     def apply_interest_charge(self, overdue_amount: Decimal):
@@ -35,4 +35,5 @@ class CreditCardAccount(Account):
         if charge > 0:
             # We use deposit because balance represents debt for CCs
             self.deposit(charge)
+
         return charge

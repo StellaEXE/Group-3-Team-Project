@@ -1,7 +1,6 @@
 from typing import Optional
 
 class UserSession:
-
     # Singleton class to hold the user's session in memory.
     _instance = None
 
