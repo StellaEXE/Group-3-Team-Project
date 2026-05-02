@@ -69,18 +69,36 @@ CAPITAL_ONE_STYLE = """
     QPushButton#redButton { background-color: #D22E1E; }
     QPushButton#redButton:hover { background-color: #b02619; }
 
-    /* Small Action Buttons (for + and ...) */
+    /* Action Buttons (like the + or ... buttons) */
     QPushButton#actionButton {
+        background-color: #e0e0e0;
+        color: #333333;
+        font-weight: bold;
+        padding: 8px 12px;
+        border-radius: 4px;
+    }
+    QPushButton#actionButton:hover {
+        background-color: #cccccc;
+    }
+    
+    /* Table Styling */
+    QTableWidget {
+        background-color: white;
+        color: #333333; /* Fixed: Forced text to be black */
+        border: 1px solid #cccccc;
+        border-radius: 4px;
+        gridline-color: #e0e0e0;
+        selection-background-color: #004879;
+        selection-color: white;
+        alternate-background-color: #f9f9f9;
+    }
+    
+    QHeaderView::section {
+        background-color: #F4F5F7;
+        color: #004879;
+        font-weight: bold;
         padding: 5px;
-        font-size: 16px;
-        min-width: 35px;
+        border: none;
+        border-bottom: 2px solid #004879;
     }
-
-    QPushButton#sidebarBtn {
-        background-color: transparent;
-        color: white;
-        text-align: left;
-        padding: 12px;
-    }
-    QPushButton#sidebarBtn:hover { background-color: #003a5c; }
 """

@@ -51,11 +51,15 @@ class DeleteTransaction(QDialog):
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+
+        # Enables Shift-Click and Ctrl-Click for multiple selections
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.table.setAlternatingRowColors(True)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setShowGrid(False)
         layout.addWidget(self.table)
 
-        del_btn = QPushButton("Delete Selected Transaction", objectName="redButton")
+        del_btn = QPushButton("Delete Selected Transaction(s)", objectName="redButton")
         del_btn.clicked.connect(self.handle_delete)
         layout.addWidget(del_btn)
 
@@ -74,9 +78,8 @@ class DeleteTransaction(QDialog):
             if s_text in target:
                 filtered.append(tx)
 
-        # 2. Apply Sort (Default is Date Asc, Amount Asc via the first dropdown option)
+        # 2. Apply Sort
         sort_val = self.sort_box.currentText()
-
         if sort_val == "Date Asc (↑)":
             filtered.sort(key=lambda t: (t.date, t.amount))
         elif sort_val == "Date Desc (↓)":
@@ -107,17 +110,25 @@ class DeleteTransaction(QDialog):
             self.table.setItem(row, 1, item_amt)
 
     def handle_delete(self):
-        selected = self.table.selectedItems()
-        if not selected:
-            QMessageBox.warning(self, "Error", "Please select a transaction to delete.")
+        selected_items = self.table.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, "Error", "Please select at least one transaction to delete.")
             return
 
-        tx_id = selected[0].data(Qt.ItemDataRole.UserRole)
+        # QTableWidget selects every cell in the row. We use a set to find unique row numbers.
+        selected_rows = set(item.row() for item in selected_items)
+        tx_ids = [self.table.item(row, 0).data(Qt.ItemDataRole.UserRole) for row in selected_rows]
+
+        count = len(tx_ids)
+        plural = "transaction" if count == 1 else "transactions"
+
         confirm = QMessageBox.question(self, "Confirm Deletion",
-                                       "Are you sure you want to permanently delete this transaction?",
+                                       f"Are you sure you want to permanently delete {count} {plural}?",
                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if confirm == QMessageBox.StandardButton.Yes:
-            self.repo.delete_transaction(tx_id)
+            for tx_id in tx_ids:
+                self.repo.delete_transaction(tx_id)
+
             self.transactions_deleted = True
             self.load_data()
