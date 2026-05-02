@@ -7,7 +7,7 @@ from ui.component.TransactionList import TransactionList
 
 from core.transaction.TransactionRepository import TransactionRepository
 from core.auth.UserSession import UserSession
-
+from core.utils.Signal import global_signal
 
 class Dashboard(QWidget):
     def __init__(self):
@@ -17,6 +17,9 @@ class Dashboard(QWidget):
 
         self.setup_ui()
         self.refresh_data()
+
+        # Respond to global updates
+        global_signal.refresh_requested.connect(self.refresh_data)
 
     def setup_ui(self):
         layout = QHBoxLayout(self)
@@ -43,7 +46,7 @@ class Dashboard(QWidget):
         card_layout.addWidget(self.chart_placeholder, stretch=1)
 
         details_btn = QPushButton("View Spending Details")
-        details_btn.clicked.connect(self.show_detailed_analytics)
+        # details_btn.clicked.connect(self.show_detailed_analytics)
         card_layout.addWidget(details_btn)
 
         middle_layout.addWidget(middle_card)
@@ -76,6 +79,7 @@ class Dashboard(QWidget):
 
     def refresh_data(self):
         """Calculates global totals and refreshes the transaction component."""
+        # GUARD: Avoid login crashes
         user_id = self.session.active_user_id
         if not user_id:
             return
@@ -85,7 +89,6 @@ class Dashboard(QWidget):
         total_spent = 0
         total_income = 0
 
-        # Calculate totals from the full list
         for tx in transactions:
             if tx.type in ("EXPENSE", "TRANSFER_OUT"):
                 total_spent += tx.amount
@@ -96,10 +99,5 @@ class Dashboard(QWidget):
         self.total_spending_label.setText(f"Total Spending: ${total_spent:,.2f}")
         self.total_income_label.setText(f"Total Money In: ${total_income:,.2f}")
 
-        # Let the component handle the list formatting
+        # Refresh the reusable transaction list component
         self.tx_list.update_with_data(transactions)
-
-    def show_detailed_analytics(self):
-        """Opens the analytics dialog for a deeper dive into categories."""
-        dlg = Analytics(self)
-        dlg.exec()
