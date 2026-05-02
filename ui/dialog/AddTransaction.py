@@ -25,7 +25,7 @@ class AddTransaction(QDialog):
         self.all_vendors = []
 
         self.setWindowTitle("Record Transaction")
-        self.setFixedSize(450, 650)
+        self.setFixedSize(450, 750)
         self.setup_ui()
         self.load_initial_data()
 
@@ -61,12 +61,12 @@ class AddTransaction(QDialog):
         layout.addLayout(vendor_row)
 
         self.vendor_list = QListWidget()
-        self.vendor_list.setVisible(False)
+        self.vendor_list.setFixedHeight(120)
         self.vendor_list.itemClicked.connect(self.handle_vendor_selection)
         layout.addWidget(self.vendor_list)
 
         # Category Selection
-        layout.addWidget(QLabel("Search Category:"))
+        layout.addWidget(QLabel("Search Category (or enter new and add with +):"))
         cat_search_row = QHBoxLayout()
         self.cat_search = QLineEdit(placeholderText="Type to find category...")
         self.cat_search.textChanged.connect(self.filter_categories)
@@ -78,7 +78,7 @@ class AddTransaction(QDialog):
         layout.addLayout(cat_search_row)
 
         self.cat_list = QListWidget()
-        self.cat_list.setVisible(False)
+        self.cat_list.setFixedHeight(120)
         self.cat_list.itemClicked.connect(self.handle_category_selection)
         layout.addWidget(self.cat_list)
 
@@ -96,60 +96,41 @@ class AddTransaction(QDialog):
             "SELECT vendor_id, vendor_name, default_category_id FROM vendors ORDER BY vendor_name").fetchall()
         self.all_categories = conn.execute(
             "SELECT category_id, category_name FROM categories ORDER BY category_name").fetchall()
-
         conn.close()
+
+        # Skipping if blocker on buttons
+        self.filter_vendors("")
+        self.filter_categories("")
 
     def filter_vendors(self, text):
         self.vendor_list.clear()
-
-        if not text.strip():
-            self.vendor_list.setVisible(False)
-            return
-
         matches = [v for v in self.all_vendors if text.lower() in v[1].lower()]
 
-        if matches:
-            self.vendor_list.setVisible(True)
-
-            for v_id, v_name, def_cat in matches:
-                item = QListWidgetItem(v_name)
-                item.setData(Qt.ItemDataRole.UserRole, (v_id, def_cat))
-                self.vendor_list.addItem(item)
-        else:
-            self.vendor_list.setVisible(False)
+        for v_id, v_name, def_cat in matches:
+            item = QListWidgetItem(v_name)
+            item.setData(Qt.ItemDataRole.UserRole, (v_id, def_cat))
+            self.vendor_list.addItem(item)
 
     def handle_vendor_selection(self, item):
         v_id, def_cat_id = item.data(Qt.ItemDataRole.UserRole)
         self.selected_vendor_id = v_id
         self.selected_vendor_name = item.text()
         self.vendor_search.setText(item.text())
-        self.vendor_list.setVisible(False)
         self.apply_category_id(def_cat_id)
         self.update_status()
 
     def filter_categories(self, text):
         self.cat_list.clear()
-
-        if not text.strip():
-            self.cat_list.setVisible(False)
-            return
-
         matches = [c for c in self.all_categories if text.lower() in c[1].lower()]
 
-        if matches:
-            self.cat_list.setVisible(True)
-
-            for c_id, c_name in matches:
-                item = QListWidgetItem(c_name)
-                item.setData(Qt.ItemDataRole.UserRole, c_id)
-                self.cat_list.addItem(item)
-        else:
-            self.cat_list.setVisible(False)
+        for c_id, c_name in matches:
+            item = QListWidgetItem(c_name)
+            item.setData(Qt.ItemDataRole.UserRole, c_id)
+            self.cat_list.addItem(item)
 
     def handle_category_selection(self, item):
         self.selected_category_id = item.data(Qt.ItemDataRole.UserRole)
         self.cat_search.setText(item.text())
-        self.cat_list.setVisible(False)
         self.update_status()
 
     def apply_category_id(self, cat_id):
@@ -169,6 +150,7 @@ class AddTransaction(QDialog):
             conn.execute("INSERT INTO categories (category_name) VALUES (?)", (name,))
             conn.commit()
             conn.close()
+
             self.load_initial_data()
             self.filter_categories(name)
         except sqlite3.IntegrityError:
@@ -190,13 +172,14 @@ class AddTransaction(QDialog):
             self.load_initial_data()
 
     def open_edit_vendor(self):
-        if self.selected_vendor_id and EditVendor(self.selected_vendor_id, self).exec():
+        if EditVendor(self.selected_vendor_id, self).exec():
             self.load_initial_data()
 
     def handle_save(self):
         try:
             raw_amt = self.amount_input.text().strip()
             if not raw_amt: raise ValueError("Amount required")
+
             amt = Decimal(raw_amt)
             if not self.selected_vendor_id: raise ValueError("Select a vendor")
             if not self.selected_category_id: raise ValueError("Select a category")
@@ -206,7 +189,7 @@ class AddTransaction(QDialog):
                 self.selected_category_id, "", amt, datetime.now(),
                 self.type_dropdown.currentText()
             )
-            
+
             self.accept()
         except Exception as e:
             QMessageBox.warning(self, "Error", str(e))

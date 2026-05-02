@@ -15,7 +15,7 @@ class AddAccount(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Add Financial Account")
-        self.setFixedSize(450, 550)
+        self.setFixedSize(450, 400)
         self.session = UserSession()
         self.new_account = None
         self.setup_ui()
