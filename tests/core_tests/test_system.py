@@ -26,6 +26,7 @@ from core.transaction.TransactionRepository import TransactionRepository
 from core.analytics.AnalyticsProcessor import AnalyticsProcessor
 from core.visualizer.PieChartVisualizer import PieChartVisualizer
 from core.visualizer.BarGraphVisualizer import BarGraphVisualizer
+from core.visualizer.LineGraphVisualizer import LineGraphVisualizer
 
 @pytest.fixture
 def integration_db():
@@ -156,32 +157,38 @@ def test_full_system_workflow(integration_db):
     # --- ANALYTICS ---
     analytics = AnalyticsProcessor(txn_repo, acc_repo)
 
-    # Net Worth: $2000 (Checking) - $500 (CC Debt) = $1500
-    net_worth = analytics.get_total_net_worth(user_id)
-    assert net_worth == Decimal('1500.00')
+    # We fetch daily aggregated data for the user
+    results = analytics.get_aggregated_data(user_id, period_type="Daily")
 
-    # Debt-to-Credit: $500 debt / $5000 limit = 0.10
-    ratio = analytics.get_debt_to_credit_ratio(user_id)
-    assert ratio == 0.10
+    # Get today's date key to verify the current standing
+    today_key = datetime.now().strftime("%Y-%m-%d")
+    assert today_key in results
 
-    # Format data for UI
-    chart_data = analytics.format_category_data_for_charts(cc_id)
-    assert chart_data["Electronics"] == 500.0
+    # Replaces net_worth check: $2000 (Checking) - $500 (CC Debt) = $1500
+    # The processor winds back history to find this value automatically
+    assert results[today_key]["Total Balance"] == 1500.0
 
-    print("[SUCCESS] Analytics: Net worth and credit ratios calculated accurately.")
+    # Replaces format_category_data check: Verify the $500 expense was captured
+    assert results[today_key]["Expense"] == 500.0
+
+    print("[SUCCESS] Analytics: Balance reconstructed and multi-series data aggregated.")
 
     # --- VISUALIZATION ---
     pie_viz = PieChartVisualizer()
     bar_viz = BarGraphVisualizer()
+    line_viz = LineGraphVisualizer()
 
-    # Generate figures (No .show() to keep the test automated)
-    pie_fig = pie_viz.render(chart_data, "Spending Breakdown")
-    bar_fig = bar_viz.render(chart_data, "Vendor Analysis")
+    # The visualizers now accept the multi-series dictionary format:
+    # {'YYYY-MM-DD': {'Income': float, 'Expense': float, 'Total Balance': float}}
+    pie_fig = pie_viz.render(results, "Spending Distribution")
+    bar_fig = bar_viz.render(results, "Daily Activity")
+    line_fig = line_viz.render(results, "Wealth Trend")
 
     assert isinstance(pie_fig, Figure)
     assert isinstance(bar_fig, Figure)
+    assert isinstance(line_fig, Figure)
 
-    print("[SUCCESS] Visualization: Chart figures generated and ready for PyQt layout.")
+    print("[SUCCESS] Visualization: Multi-series data rendered across all chart types.")
     print("--- FULL SYSTEM INTEGRATION TEST PASSED ---")
 
 if __name__ == "__main__":

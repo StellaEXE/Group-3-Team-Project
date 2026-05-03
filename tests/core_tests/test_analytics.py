@@ -51,7 +51,6 @@ def test_get_aggregated_data_balance_reconstruction(mock_repos):
     assert results["2026-05-02"]["Total Balance"] == 1200.0
     assert results["2026-05-02"]["Income"] == 500.0
 
-
 def test_aggregation_with_credit_card_debt(mock_repos):
     """Ensures Credit Card balances correctly decrease the global total balance"""
     mock_txn_repo, mock_acc_repo = mock_repos
@@ -75,7 +74,6 @@ def test_aggregation_with_credit_card_debt(mock_repos):
     if results:
         latest_key = max(results.keys())
         assert results[latest_key]["Total Balance"] == 600.0
-
 
 def test_search_filtering_in_aggregation(mock_repos):
     """Verifies that Income/Expense series are filtered by search, but Balance remains global"""
@@ -101,3 +99,6 @@ def test_search_filtering_in_aggregation(mock_repos):
     assert results["2026-05-03"]["Expense"] == 50.0
     # Total Balance should still reflect the actual bank status ($1000)
     assert results["2026-05-03"]["Total Balance"] == 1000.0
+
+if __name__ == "__main__":
+    pytest.main([__file__])
