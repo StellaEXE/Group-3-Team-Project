@@ -45,10 +45,9 @@ CAPITAL_ONE_STYLE = """
     }
 
     QListWidget {
-        border: none; /* Keep the sidebar list clean */
+        border: none;
     }
 
-    /* Ensure the dropdown list inside the combo box is also styled */
     QComboBox QAbstractItemView {
         background-color: white;
         color: #333333;
@@ -56,7 +55,7 @@ CAPITAL_ONE_STYLE = """
         selection-color: white;
     }
 
-    /* Buttons */
+    /* Standard Buttons */
     QPushButton {
         background-color: #004879;
         color: white;
@@ -69,7 +68,19 @@ CAPITAL_ONE_STYLE = """
     QPushButton#redButton { background-color: #D22E1E; }
     QPushButton#redButton:hover { background-color: #b02619; }
 
-    /* Action Buttons (like the + or ... buttons) */
+    /* Sidebar Buttons - Restored Bold */
+    QPushButton#sidebarBtn {
+        text-align: left;
+        background-color: transparent;
+        color: white;
+        padding: 10px;
+        border-radius: 0px;
+        font-weight: bold;
+    }
+    QPushButton#sidebarBtn:hover {
+        background-color: #003a5c;
+    }
+
     QPushButton#actionButton {
         background-color: #e0e0e0;
         color: #333333;
@@ -84,7 +95,7 @@ CAPITAL_ONE_STYLE = """
     /* Table Styling */
     QTableWidget {
         background-color: white;
-        color: #333333; /* Fixed: Forced text to be black */
+        color: #333333;
         border: 1px solid #cccccc;
         border-radius: 4px;
         gridline-color: #e0e0e0;

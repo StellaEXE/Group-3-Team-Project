@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt
 
 from core.transaction.TransactionRepository import TransactionRepository
 
+
 class DeleteTransaction(QDialog):
     def __init__(self, account_id, parent=None):
         super().__init__(parent)
@@ -45,14 +46,14 @@ class DeleteTransaction(QDialog):
 
         layout.addLayout(ctrl_layout)
 
-        # 2-Column Table for Results
+        # Table for Results
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Transaction Details", "Amount"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.verticalHeader().setVisible(False)
 
-        # Enables Shift-Click and Ctrl-Click for multiple selections
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.table.setAlternatingRowColors(True)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -101,10 +102,12 @@ class DeleteTransaction(QDialog):
 
             item_details = QTableWidgetItem(details)
             item_details.setData(Qt.ItemDataRole.UserRole, str(tx.id))
+            item_details.setForeground(Qt.GlobalColor.black)  # Double safety for text color
 
             sign = "-" if tx.type in ("EXPENSE", "TRANSFER_OUT") else "+"
             item_amt = QTableWidgetItem(f"{sign}${tx.amount:,.2f}")
             item_amt.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            item_amt.setForeground(Qt.GlobalColor.black)
 
             self.table.setItem(row, 0, item_details)
             self.table.setItem(row, 1, item_amt)
@@ -115,15 +118,11 @@ class DeleteTransaction(QDialog):
             QMessageBox.warning(self, "Error", "Please select at least one transaction to delete.")
             return
 
-        # QTableWidget selects every cell in the row. We use a set to find unique row numbers.
         selected_rows = set(item.row() for item in selected_items)
         tx_ids = [self.table.item(row, 0).data(Qt.ItemDataRole.UserRole) for row in selected_rows]
 
-        count = len(tx_ids)
-        plural = "transaction" if count == 1 else "transactions"
-
         confirm = QMessageBox.question(self, "Confirm Deletion",
-                                       f"Are you sure you want to permanently delete {count} {plural}?",
+                                       f"Are you sure you want to permanently delete these transaction(s)?",
                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if confirm == QMessageBox.StandardButton.Yes:
