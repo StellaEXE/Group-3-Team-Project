@@ -1,6 +1,7 @@
 import sqlite3
 import uuid
 import os
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel,
                              QLineEdit, QPushButton, QMessageBox)

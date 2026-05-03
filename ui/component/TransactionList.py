@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QListWidget, QListWidgetItem
 from PyQt6.QtCore import Qt
 
-
 class TransactionList(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)

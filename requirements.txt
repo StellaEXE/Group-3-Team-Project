@@ -6,3 +6,4 @@ pytest-qt
 PyQt6
 pyqt6-sip
 python-dateutil
+numpy

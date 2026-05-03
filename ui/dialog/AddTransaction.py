@@ -1,11 +1,12 @@
 import uuid
 import sqlite3
+
 from decimal import Decimal
 from datetime import datetime
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                              QLineEdit, QPushButton, QListWidget, QListWidgetItem,
-                             QMessageBox, QComboBox)
-from PyQt6.QtCore import Qt
+                             QMessageBox, QComboBox, QDateEdit)
+from PyQt6.QtCore import Qt, QDate
 
 from core.transaction.Transaction import Transaction
 
@@ -25,7 +26,7 @@ class AddTransaction(QDialog):
         self.all_vendors = []
 
         self.setWindowTitle("Record Transaction")
-        self.setFixedSize(450, 750)
+        self.setFixedSize(450, 800)
         self.setup_ui()
         self.load_initial_data()
 
@@ -35,10 +36,20 @@ class AddTransaction(QDialog):
 
         layout.addWidget(QLabel("Add Transaction", objectName="header", alignment=Qt.AlignmentFlag.AlignCenter))
 
+        # Date
+        layout.addWidget(QLabel("Date:"))
+        self.date_input = QDateEdit()
+        self.date_input.setCalendarPopup(True)
+        self.date_input.setDate(QDate.currentDate())
+        self.date_input.dateChanged.connect(self.update_status)
+        layout.addWidget(self.date_input)
+
+        # Amount
         layout.addWidget(QLabel("Amount:"))
         self.amount_input = QLineEdit(placeholderText="0.00")
         layout.addWidget(self.amount_input)
 
+        # Type
         layout.addWidget(QLabel("Transaction Type:"))
         self.type_dropdown = QComboBox()
         self.type_dropdown.addItems(["EXPENSE", "INCOME", "TRANSFER_OUT", "TRANSFER_IN"])
@@ -82,9 +93,10 @@ class AddTransaction(QDialog):
         self.cat_list.itemClicked.connect(self.handle_category_selection)
         layout.addWidget(self.cat_list)
 
-        self.status_label = QLabel("Vendor: None | Category: None",
+        self.status_label = QLabel("Date: None | Vendor: None | Category: None",
                                    styleSheet="color: #004879; font-weight: bold;")
         layout.addWidget(self.status_label)
+        self.update_status()
 
         save_btn = QPushButton("Save Transaction", objectName="redButton")
         save_btn.clicked.connect(self.handle_save)
@@ -98,7 +110,6 @@ class AddTransaction(QDialog):
             "SELECT category_id, category_name FROM categories ORDER BY category_name").fetchall()
         conn.close()
 
-        # Skipping if blocker on buttons
         self.filter_vendors("")
         self.filter_categories("")
 
@@ -159,19 +170,23 @@ class AddTransaction(QDialog):
     def update_status(self):
         v_name = self.selected_vendor_name if self.selected_vendor_name else "None"
         c_name = "None"
+        date_str = self.date_input.date().toString("MMM dd, yyyy")
 
         for c_id, name in self.all_categories:
             if c_id == self.selected_category_id:
                 c_name = name
                 break
 
-        self.status_label.setText(f"Vendor: {v_name} | Category: {c_name}")
+        self.status_label.setText(f"Date: {date_str} | Vendor: {v_name} | Category: {c_name}")
 
     def open_add_vendor(self):
         if AddVendor(self).exec():
             self.load_initial_data()
 
     def open_edit_vendor(self):
+        if not self.selected_vendor_id:
+            QMessageBox.warning(self, "Selection Required", "Please select a vendor to edit.")
+            return
         if EditVendor(self.selected_vendor_id, self).exec():
             self.load_initial_data()
 
@@ -184,9 +199,18 @@ class AddTransaction(QDialog):
             if not self.selected_vendor_id: raise ValueError("Select a vendor")
             if not self.selected_category_id: raise ValueError("Select a category")
 
+            q_date = self.date_input.date()
+            py_date = datetime(q_date.year(), q_date.month(), q_date.day())
+
             self.new_txn = Transaction(
-                uuid.uuid4(), self.account_id, self.selected_vendor_id, self.selected_vendor_name,
-                self.selected_category_id, "", amt, datetime.now(),
+                uuid.uuid4(),
+                self.account_id,
+                self.selected_vendor_id,
+                self.selected_vendor_name,
+                self.selected_category_id,
+                "",
+                amt,
+                py_date,
                 self.type_dropdown.currentText()
             )
 

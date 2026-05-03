@@ -1,4 +1,5 @@
 import uuid
+
 from decimal import Decimal
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit,
                              QPushButton, QComboBox, QMessageBox, QStackedWidget, QWidget)

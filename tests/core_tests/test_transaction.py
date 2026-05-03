@@ -11,8 +11,6 @@ from datetime import datetime
 from core.transaction.Transaction import Transaction
 from core.transaction.TransactionRepository import TransactionRepository
 
-# --- FIXTURES (Setup/Teardown) ---
-
 @pytest.fixture
 def temp_db():
     """Creates a temporary file-based database for integration testing"""

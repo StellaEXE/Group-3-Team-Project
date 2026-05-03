@@ -7,7 +7,7 @@ from core.visualizer.ChartFactory import ChartFactory
 
 class PieChartVisualizer(ChartFactory):
     def render(self, data_dict: Dict[str, Dict[str, float]], title: str = "") -> Figure:
-        fig = Figure(figsize=(5, 5), dpi=100, facecolor='white')
+        fig = Figure(figsize=(4, 3), dpi=100, facecolor='white')
         ax = fig.add_subplot(111)
 
         if not data_dict:
@@ -19,26 +19,47 @@ class PieChartVisualizer(ChartFactory):
         total_expense = sum(p.get('Expense', 0) for p in data_dict.values())
         total_bal = sum(max(0, p.get('Total Balance', 0)) for p in data_dict.values())
 
-        labels_raw = ['Income', 'Expense', 'Total Balance']
-        values_raw = [total_income, total_expense, total_bal]
+        raw_labels = ['Income', 'Expense', 'Total Balance']
+        raw_values = [total_income, total_expense, total_bal]
 
-        labels = [l for l, v in zip(labels_raw, values_raw) if v > 0]
-        values = [v for v in values_raw if v > 0]
+        # Filter out zero/negative values
+        labels = []
+        values = []
+        for l, v in zip(raw_labels, raw_values):
+            if v > 0:
+                labels.append(l)
+                values.append(v)
 
         if not values:
             ax.text(0.5, 0.5, "No positive assets", ha='center', va='center', color='#767676')
             ax.set_axis_off()
             return fig
 
+        total_sum = sum(values)
+
+        # Combine Label
+        final_labels = []
+        for l, v in zip(labels, values):
+            pct = (v / total_sum) * 100
+            final_labels.append(f"{l}\n${v:,.0f}\n({pct:.1f}%)")
+
         color_map = {'Income': '#004a99', 'Expense': '#D22E1E', 'Total Balance': '#00d2ff'}
         colors = [color_map[l] for l in labels]
 
-        wedges, texts, autotexts = ax.pie(
-            values, labels=labels, autopct='%1.0f%%', startangle=90, colors=colors,
-            pctdistance=0.85, wedgeprops={'width': 0.3, 'edgecolor': 'white'}
+        # Create the pie chart
+        wedges, texts = ax.pie(
+            values,
+            labels=final_labels,
+            startangle=90,
+            colors=colors,
+            labeldistance=1.15,  # Pushes labels further out to avoid crowding
+            wedgeprops={'width': 0.4, 'edgecolor': 'white'}
         )
 
-        plt.setp(autotexts, size=9, weight="bold", color="white")
-        ax.set_title(title, fontsize=12, fontweight='bold', pad=15, color='#004879')
+        # Style the outer label text
+        plt.setp(texts, size=9, color="#333333", fontweight='bold')
+
+        ax.set_title(title, fontsize=12, fontweight='bold', pad=20, color='#004879')
         fig.tight_layout()
+
         return fig
