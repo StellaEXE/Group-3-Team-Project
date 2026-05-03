@@ -5,6 +5,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFrame, QLabel, QLineEdit, QP
 from core.auth.AuthenticationService import AuthenticationService
 from core.auth.UserSession import UserSession
 
+from ui.dialog.SignUp import SignUp
+
 class Login(QWidget):
     def __init__(self, on_login_success):
         super().__init__()
@@ -18,7 +20,7 @@ class Login(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         login_box = QFrame(objectName="card")
-        login_box.setFixedSize(400, 400)
+        login_box.setFixedSize(400, 450)  # Increased height slightly for the new button
         box_layout = QVBoxLayout(login_box)
         box_layout.setContentsMargins(40, 40, 40, 40)
         box_layout.setSpacing(15)
@@ -31,10 +33,19 @@ class Login(QWidget):
         login_btn = QPushButton("Sign In", objectName="redButton")
         login_btn.clicked.connect(self.handle_login)
 
+        create_acc_btn = QPushButton("Create Account", objectName="actionButton")
+        create_acc_btn.clicked.connect(self.open_signup)
+
         box_layout.addWidget(self.username_input)
         box_layout.addWidget(self.password_input)
         box_layout.addWidget(login_btn)
+        box_layout.addWidget(create_acc_btn)
+
         layout.addWidget(login_box)
+
+    def open_signup(self):
+        dialog = SignUp(self)
+        dialog.exec()
 
     def handle_login(self):
         username = self.username_input.text()
@@ -59,5 +70,5 @@ class Login(QWidget):
                     return
 
             QMessageBox.warning(self, "Login Failed", "Invalid username or password.")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Database error: {e}")
+        except sqlite3.Error as e:
+            QMessageBox.critical(self, "Database Error", f"An error occurred: {str(e)}")

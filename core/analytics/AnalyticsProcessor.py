@@ -1,6 +1,7 @@
 from decimal import Decimal
 from uuid import UUID
-from typing import Dict
+from datetime import datetime
+from typing import Dict, List, Optional, Set
 
 from core.account.AccountRepository import AccountRepository
 from core.account.CreditCardAccount import CreditCardAccount
@@ -11,46 +12,98 @@ class AnalyticsProcessor:
         self._txn_repo = txn_repo
         self._acc_repo = acc_repo
 
-    def get_total_net_worth(self, user_id: str) -> Decimal:
-        """Calculates total assets minus total liabilities
-           Credit Card balances represent debt (liabilities), so they are subtracted
-           All other accounts represent assets and are added"""
-        accounts = self._acc_repo.fetch_all_accounts(user_id)
-        net_worth = Decimal('0.00')
+    def get_aggregated_data(
+            self,
+            user_id: str,
+            account_id: Optional[UUID] = None,
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None,
+            group_by: str = "Category",
+            period_type: str = "Daily",
+            search_text: str = ""
+    ) -> Dict[str, Dict[str, float]]:
+        """
+        Processes transactions and reconstructs the balance history.
+        Series: Income (Filtered), Expense (Filtered), Total Balance (Cumulative/Global)
+        """
+        # 1. Fetch current context
+        all_accounts = self._acc_repo.fetch_all_accounts(user_id)
+        if account_id:
+            target_accounts = [acc for acc in all_accounts if acc.id == account_id]
+            all_txns = self._txn_repo.fetch_transactions(account_id)
+        else:
+            target_accounts = all_accounts
+            all_txns = self._txn_repo.fetch_user_transactions(user_id)
 
-        for acc in accounts:
+        # 2. Calculate "Current Starting Point" for balance
+        # Credit Card balances are treated as negative for Net Worth/Total Balance
+        current_total_balance = Decimal("0.00")
+        for acc in target_accounts:
             if isinstance(acc, CreditCardAccount):
-                net_worth -= acc.balance
+                current_total_balance -= acc.balance
             else:
-                net_worth += acc.balance
+                current_total_balance += acc.balance
 
-        return net_worth
+        # 3. Sort ALL transactions descending to walk backwards and find historical balances
+        all_txns.sort(key=lambda x: x.date, reverse=True)
 
-    def get_debt_to_credit_ratio(self, user_id: str) -> float:
-        """Calculates the ratio of total credit card debt to total credit limits
-           Returns a float between 0.0 and 1.0 (or higher if over limit)"""
-        accounts = self._acc_repo.fetch_all_accounts(user_id)
-        total_debt = Decimal('0.00')
-        total_credit_limit = Decimal('0.00')
+        history = {}
+        running_bal = current_total_balance
+        search_lower = search_text.lower()
 
-        for acc in accounts:
-            if isinstance(acc, CreditCardAccount):
-                total_debt += acc.balance
-                total_credit_limit += acc.credit_limit
+        # We bucket data by date string first
+        for tx in all_txns:
+            key = self._get_period_key(tx.date, period_type)
+            if key not in history:
+                history[key] = {"Income": Decimal("0.00"), "Expense": Decimal("0.00"), "Balance": Decimal("0.00")}
 
-        if total_credit_limit == Decimal('0.00'):
-            return 0.0
+            # Cumulative Balance Logic (Unfiltered)
+            # We assign the 'running_bal' to the period as the balance at the END of that period
+            if history[key]["Balance"] == 0:
+                history[key]["Balance"] = running_bal
 
-        return float(total_debt / total_credit_limit)
+            # Filtered Series (Income/Expense)
+            match = True
+            if search_text:
+                target = tx.vendor_name.lower() if group_by == "Vendor" else tx.category_name.lower()
+                if search_lower not in target:
+                    match = False
 
-    def format_category_data_for_charts(self, account_id: UUID) -> Dict[str, float]:
-        """Fetches category spending and converts Decimals to floats for PyQt"""
-        raw_data = self._txn_repo.get_total_spending_by_category(account_id)
+            if match:
+                if tx.type in ("INCOME", "TRANSFER_IN"):
+                    history[key]["Income"] += tx.amount
+                elif tx.type in ("EXPENSE", "TRANSFER_OUT"):
+                    history[key]["Expense"] += tx.amount
 
-        return {category: float(amount) for category, amount in raw_data.items()}
+            # Wind back the balance for the next (chronologically previous) transaction
+            if tx.type in ("INCOME", "TRANSFER_IN"):
+                running_bal -= tx.amount
+            elif tx.type in ("EXPENSE", "TRANSFER_OUT"):
+                running_bal += tx.amount
 
-    def format_vendor_data_for_charts(self, account_id: UUID) -> Dict[str, float]:
-        """Fetches vendor spending and converts Decimals to floats for UI charting"""
-        raw_data = self._txn_repo.get_total_spending_by_vendor(account_id)
+        # 4. Filter by requested date range and convert to floats for Matplotlib
+        final_results = {}
+        sorted_keys = sorted(history.keys())
 
-        return {vendor: float(amount) for vendor, amount in raw_data.items()}
+        for k in sorted_keys:
+            dt = self._key_to_datetime(k, period_type)
+            if start_date and dt < start_date: continue
+            if end_date and dt > end_date: continue
+
+            final_results[k] = {
+                "Income": float(history[k]["Income"]),
+                "Expense": float(history[k]["Expense"]),
+                "Total Balance": float(history[k]["Balance"])  # No longer "Net"
+            }
+
+        return final_results
+
+    def _get_period_key(self, date, p_type):
+        if p_type == "Daily": return date.strftime("%Y-%m-%d")
+        if p_type == "Monthly": return date.strftime("%Y-%m")
+        return date.strftime("%Y")
+
+    def _key_to_datetime(self, key, p_type):
+        if p_type == "Daily": return datetime.strptime(key, "%Y-%m-%d")
+        if p_type == "Monthly": return datetime.strptime(key, "%Y-%m")
+        return datetime.strptime(key, "%Y")

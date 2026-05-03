@@ -1,10 +1,9 @@
 from decimal import Decimal
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QFrame,
-                             QLabel, QComboBox, QPushButton)
+from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QFrame, QLabel)
 
-from ui.dialog.Analytics import Analytics
 from ui.component.TransactionList import TransactionList
+from ui.component.AnalyticsPanel import AnalyticsPanel
 
 from core.transaction.TransactionRepository import TransactionRepository
 from core.account.AccountRepository import AccountRepository
@@ -37,17 +36,11 @@ class Dashboard(QWidget):
         middle_card = QFrame(objectName="card")
         card_layout = QVBoxLayout(middle_card)
 
-        header_layout = QHBoxLayout()
-        header_layout.addWidget(QLabel("Analytics Overview", objectName="header"))
+        card_layout.addWidget(QLabel("Analytics Overview", objectName="header"))
 
-        self.chart_dropdown = QComboBox()
-        self.chart_dropdown.addItems(["Pie Chart", "Bar Graph", "Line Chart"])
-        header_layout.addWidget(self.chart_dropdown, alignment=Qt.AlignmentFlag.AlignRight)
-        card_layout.addLayout(header_layout)
-
-        self.chart_placeholder = QLabel("Interactive Chart Content")
-        self.chart_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        card_layout.addWidget(self.chart_placeholder, stretch=1)
+        # Injecting the reusable Analytics Panel (Global)
+        self.analytics_panel = AnalyticsPanel()
+        card_layout.addWidget(self.analytics_panel, stretch=1)
 
         middle_layout.addWidget(middle_card)
 
@@ -74,6 +67,7 @@ class Dashboard(QWidget):
         r_layout = QVBoxLayout(recent_card)
         r_layout.addWidget(QLabel("Recent Activity (Global)", objectName="header"))
 
+        # Using the reusable component
         self.tx_list = TransactionList()
         r_layout.addWidget(self.tx_list)
 
@@ -135,3 +129,6 @@ class Dashboard(QWidget):
 
         # Refresh the reusable transaction list component
         self.tx_list.update_with_data(transactions)
+
+        # Trigger chart reload
+        self.analytics_panel.refresh_chart()

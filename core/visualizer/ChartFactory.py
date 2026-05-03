@@ -6,6 +6,9 @@ class ChartFactory(ABC):
     """Abstract base class for all chart visualizers"""
 
     @abstractmethod
-    def render(self, data_dict: Dict[str, float], title: str = "") -> Figure:
-        """Processes data and returns a styled Matplotlib Figure"""
+    def render(self, data_dict: Dict[str, Dict[str, float]], title: str = "") -> Figure:
+        """
+        Processes multi-series data.
+        Expected format: {'Period1': {'Income': 100, 'Expense': 50, 'Net': 50}, ...}
+        """
         pass

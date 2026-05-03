@@ -10,6 +10,7 @@ from core.utils.Signal import global_signal
 
 from ui.dialog.AddTransaction import AddTransaction
 from ui.dialog.DeleteTransaction import DeleteTransaction
+from ui.component.AnalyticsPanel import AnalyticsPanel
 
 class SpecificAccount(QWidget):
     def __init__(self, account: Account):
@@ -37,9 +38,9 @@ class SpecificAccount(QWidget):
 
         m_card_layout.addWidget(QLabel(f"{self.account.name} Overview", objectName="header"))
 
-        self.chart_placeholder = QLabel("Spending Analytics Graph Goes Here")
-        self.chart_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        m_card_layout.addWidget(self.chart_placeholder, stretch=1)
+        # Injecting the reusable Analytics Panel (Specific Account)
+        self.analytics_panel = AnalyticsPanel(account_id=self.account.id)
+        m_card_layout.addWidget(self.analytics_panel, stretch=1)
 
         middle_layout.addWidget(middle_card)
 
@@ -67,7 +68,7 @@ class SpecificAccount(QWidget):
         # Action Buttons Layout
         btn_layout = QHBoxLayout()
 
-        add_btn = QPushButton("Add Transaction", objectName="redButton")
+        add_btn = QPushButton("Add Transaction", objectName="actionButton")
         add_btn.clicked.connect(self.trigger_add_transaction)
         btn_layout.addWidget(add_btn)
 
@@ -90,6 +91,7 @@ class SpecificAccount(QWidget):
             new_txn = dialog.new_txn
             if new_txn:
                 self.repo.save_transaction(new_txn)
+                # SEND SIGNAL: Tell the Dashboard and Sidebar to update too
                 global_signal.refresh_requested.emit()
 
     def trigger_delete_transaction(self):
@@ -130,3 +132,6 @@ class SpecificAccount(QWidget):
                 break
 
         self.balance_label.setText(f"${self.account.balance:,.2f}")
+
+        # Trigger chart reload
+        self.analytics_panel.refresh_chart()

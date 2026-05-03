@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QMainWindow, QStackedWidget
 
-from ui.styles import CAPITAL_ONE_STYLE
+from ui.component.styles import CAPITAL_ONE_STYLE
 from ui.view.Login import Login
 from ui.view.MainApp import MainApp
 

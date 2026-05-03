@@ -35,7 +35,7 @@ CAPITAL_ONE_STYLE = """
         color: #004879;
     }
 
-    /* THE BIG FIX: Force all inputs and the list sidebar to white background */
+    /* Input Fields & Date Edits */
     QLineEdit, QComboBox, QSpinBox, QDateEdit, QListWidget, QListWidget::viewport {
         background-color: white !important;
         color: #333333 !important; 
@@ -44,18 +44,17 @@ CAPITAL_ONE_STYLE = """
         padding: 8px;
     }
 
-    QListWidget {
-        border: none;
-    }
-
-    QComboBox QAbstractItemView {
+    /* Search Dropdown (Completer) & Combo Dropdown Styling */
+    QAbstractItemView {
         background-color: white;
         color: #333333;
         selection-background-color: #004879;
         selection-color: white;
+        border: 1px solid #cccccc;
+        outline: none;
     }
 
-    /* Standard Buttons */
+    /* Buttons */
     QPushButton {
         background-color: #004879;
         color: white;
@@ -68,7 +67,6 @@ CAPITAL_ONE_STYLE = """
     QPushButton#redButton { background-color: #D22E1E; }
     QPushButton#redButton:hover { background-color: #b02619; }
 
-    /* Sidebar Buttons - Restored Bold */
     QPushButton#sidebarBtn {
         text-align: left;
         background-color: transparent;
@@ -81,18 +79,39 @@ CAPITAL_ONE_STYLE = """
         background-color: #003a5c;
     }
 
-    QPushButton#actionButton {
-        background-color: #e0e0e0;
-        color: #333333;
-        font-weight: bold;
-        padding: 8px 12px;
-        border-radius: 4px;
-    }
-    QPushButton#actionButton:hover {
-        background-color: #cccccc;
+    /* Calendar Theme - Comprehensive Fix */
+    QCalendarWidget QWidget {
+        background-color: white;
     }
     
-    /* Table Styling */
+    QCalendarWidget #qt_calendar_navigationbar {
+        background-color: white;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    QCalendarWidget QToolButton {
+        color: #004879;
+        font-weight: bold;
+        background-color: transparent;
+        icon-size: 20px;
+    }
+
+    QCalendarWidget QToolButton:hover {
+        background-color: #f4f5f7;
+    }
+
+    QCalendarWidget QAbstractItemView:enabled {
+        color: #333333;
+        selection-background-color: #004879;
+        selection-color: white;
+        background-color: white;
+    }
+
+    QCalendarWidget QTableView {
+        alternate-background-color: #f4f5f7;
+    }
+
+    /* Table Styling for Transactions */
     QTableWidget {
         background-color: white;
         color: #333333;

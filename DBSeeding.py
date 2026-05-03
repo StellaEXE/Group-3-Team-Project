@@ -1,15 +1,14 @@
 import sqlite3
 import uuid
 import os
+
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-# --- INTERNAL IMPORTS ---
 from core.auth.AuthenticationService import AuthenticationService
 from core.transaction.Transaction import Transaction
 from core.transaction.TransactionRepository import TransactionRepository
 
-# --- CONFIGURATION ---
 DB_PATH = 'WealthTrackersDB.sqlite'
 USERNAME = "BasilissaOfNuts"  # Login Username
 PASSWORD = "Im2ooUncFor0r5!t"
