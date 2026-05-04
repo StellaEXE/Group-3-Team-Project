@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from core.account.Account import Account
 from core.account.AccountRepository import AccountRepository
 from core.transaction.TransactionRepository import TransactionRepository
-from core.auth.UserSession import UserSession
+from core.authentication.UserSession import UserSession
 from core.utils.Signal import global_signal
 
 from ui.dialog.AddTransaction import AddTransaction

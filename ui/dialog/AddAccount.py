@@ -5,8 +5,8 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit,
                              QPushButton, QComboBox, QMessageBox, QStackedWidget, QWidget)
 from PyQt6.QtCore import Qt
 
-from core.auth.AuthenticationService import AuthenticationService
-from core.auth.UserSession import UserSession
+from core.authentication.AuthenticationService import AuthenticationService
+from core.authentication.UserSession import UserSession
 from core.account.CheckingAccount import CheckingAccount
 from core.account.SavingsAccount import SavingsAccount
 from core.account.CreditCardAccount import CreditCardAccount

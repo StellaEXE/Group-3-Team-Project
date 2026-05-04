@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from core.auth.AuthenticationService import AuthenticationService
+from core.authentication.AuthenticationService import AuthenticationService
 from core.transaction.Transaction import Transaction
 from core.transaction.TransactionRepository import TransactionRepository
 

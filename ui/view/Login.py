@@ -2,8 +2,8 @@ import sqlite3
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFrame, QLabel, QLineEdit, QPushButton, QMessageBox)
 
-from core.auth.AuthenticationService import AuthenticationService
-from core.auth.UserSession import UserSession
+from core.authentication.AuthenticationService import AuthenticationService
+from core.authentication.UserSession import UserSession
 
 from ui.dialog.SignUp import SignUp
 

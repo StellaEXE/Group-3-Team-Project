@@ -3,7 +3,7 @@ from decimal import Decimal
 from uuid import UUID
 from typing import List
 
-from core.auth.AuthenticationService import AuthenticationService
+from core.authentication.AuthenticationService import AuthenticationService
 
 class Account(ABC):
     def __init__(self, account_id: UUID, name: str, balance: Decimal, enc_acc_num: bytes):

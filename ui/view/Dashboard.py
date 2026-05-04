@@ -10,7 +10,7 @@ from core.account.AccountRepository import AccountRepository
 from core.account.CheckingAccount import CheckingAccount
 from core.account.CreditCardAccount import CreditCardAccount
 from core.account.DebitCardAccount import DebitCardAccount
-from core.auth.UserSession import UserSession
+from core.authentication.UserSession import UserSession
 from core.utils.Signal import global_signal
 
 class Dashboard(QWidget):

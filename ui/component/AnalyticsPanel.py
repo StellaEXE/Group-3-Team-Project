@@ -12,7 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.transaction.TransactionRepository import TransactionRepository
 from core.account.AccountRepository import AccountRepository
 from core.analytics.AnalyticsProcessor import AnalyticsProcessor
-from core.auth.UserSession import UserSession
+from core.authentication.UserSession import UserSession
 from core.visualizer.BarGraphVisualizer import BarGraphVisualizer
 from core.visualizer.LineGraphVisualizer import LineGraphVisualizer
 from core.visualizer.PieChartVisualizer import PieChartVisualizer

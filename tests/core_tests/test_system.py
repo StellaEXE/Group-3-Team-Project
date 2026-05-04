@@ -10,8 +10,8 @@ from datetime import datetime
 from matplotlib.figure import Figure
 
 # --- SECURITY & STATE ---
-from core.auth.AuthenticationService import AuthenticationService
-from core.auth.UserSession import UserSession
+from core.authentication.AuthenticationService import AuthenticationService
+from core.authentication.UserSession import UserSession
 
 # --- DOMAIN MODELS ---
 from core.account.CheckingAccount import CheckingAccount

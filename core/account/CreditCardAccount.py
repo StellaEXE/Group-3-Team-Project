@@ -2,7 +2,7 @@ from uuid import UUID
 from decimal import Decimal
 
 from core.account.Account import Account
-from core.auth.AuthenticationService import AuthenticationService
+from core.authentication.AuthenticationService import AuthenticationService
 
 class CreditCardAccount(Account):
     def __init__(self, account_id: UUID, name: str, balance: Decimal, enc_acc_num: bytes,

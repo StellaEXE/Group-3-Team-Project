@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel,
                              QLineEdit, QPushButton, QMessageBox)
 
-from core.auth.AuthenticationService import AuthenticationService
+from core.authentication.AuthenticationService import AuthenticationService
 
 class SignUp(QDialog):
     def __init__(self, parent=None):

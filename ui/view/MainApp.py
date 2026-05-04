@@ -6,7 +6,7 @@ from ui.view.Dashboard import Dashboard
 from ui.view.SpecificAccount import SpecificAccount
 
 from core.account.AccountRepository import AccountRepository
-from core.auth.UserSession import UserSession
+from core.authentication.UserSession import UserSession
 
 class MainApp(QWidget):
     def __init__(self, on_logout):
